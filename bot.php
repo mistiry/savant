@@ -209,6 +209,7 @@ function processIRCdata($data) {
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
 	$fullmessage = NULL; for ($i = 3; $i < count($pieces); $i++) { $fullmessage .= $pieces[$i] . ' '; }
+	$fullmessage = substr($fullmessage, 1);
 	$fullmessage = trim($fullmessage);
 	$commandargs = NULL; for ($i = 4; $i < count($pieces); $i++) { $commandargs .= $pieces[$i] . ' '; }
 	$commandargs = trim($commandargs);
