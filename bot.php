@@ -17,7 +17,6 @@ $settings.= "i:";	//nickserv password
 $settings.= "d:";	//debug mode
 $setting = getopt($settings);
 $errmsg = "";
-$debugmode = false;
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
 empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
