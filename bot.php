@@ -167,12 +167,13 @@ function logSeenData($nick,$hostmask,$message) {
 		global $mysqlconn;
 		global $timestamp;
 		global $debugmode;
-		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$message') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$message'";
+		$lastmessage = mysql_escape_string($message);
+		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$message') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'";
 		if(mysqli_query($mysqlconn,$sql)) {
-			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $message"; }
+			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
 			return;
 		} else {
-			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $timestamp message $message - MySQL error ".mysqli_error($mysqlconn).""; }
+			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn).""; }
 			return;
 		}
 }
@@ -207,8 +208,8 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$fullmessagearray = explode(":", $data);
-	$fullmessage = $fullmessagearray[2];
+	$fullmessagearray = explode(":", $pieces[3]);
+	$fullmessage = $fullmessagearray[1];
 	$commandargs = NULL; for ($i = 4; $i < count($pieces); $i++) { $commandargs .= $pieces[$i] . ' '; }
 	$commandargs = trim($commandargs);
 	$return = array(
