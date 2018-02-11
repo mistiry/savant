@@ -15,7 +15,6 @@ $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
 $settings.= "d:";	//debug mode
-$settings.= "m:";	//mysql config file
 $setting = getopt($settings);
 $errmsg = "";
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
@@ -23,7 +22,6 @@ empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
-empty($setting['m']) ? $errmsg.= "No MySQL Config file provided!\n" : true ;
 empty($setting['d']) ? $debugmode = false : $debugmode = true ;
 if($errmsg != "") {
   die($errmsg);
@@ -32,7 +30,10 @@ if($errmsg != "") {
 if($debugmode == true) { echo "Debug mode is enabled.\n"; }
 
 //Connect to MySQL
-include($setting['m']);
+$mysqlhost = "localhost";
+$mysqluser = "savant";
+$mysqlpass = "S@v@nTB0t";
+$mysqldb = "savant";
 $mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass,$mysqldb);
 if(!$mysqlconn) {
   die("MySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
