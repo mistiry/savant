@@ -52,8 +52,8 @@ while(1) {
 		}
 		
         //Look at messages for !command calls (first word must be the command)
-		$message = $ircdata['message'];
-        $firstword = trim($message[1]);
+		$messagearray = $ircdata['messagearray'];
+        $firstword = trim($messagearray[1]);
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
@@ -65,7 +65,7 @@ while(1) {
 
 function processIRCdata($data) {
 	$pieces = explode(' ', $data);
-	$message = explode(':', $pieces[3]);
+	$messagearray = explode(':', $pieces[3]);
 	$command = $pieces[0];
 	$messagetype = $pieces[1];
 	$location = $pieces[2];
@@ -74,15 +74,15 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$args = NULL; for ($i = 4; $i < count($ex); $i++) { $args .= $ex[$i] . ' '; }
+	$message = NULL; for ($i = 4; $i < count($ex); $i++) { $message .= $ex[$i] . ' '; }
 	$return = array(
-		'message'		=>	$message,
+		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
 		'command'		=>	$command,
 		'location'		=>	$location,
 		'userhostname'	=>	$userhostname,
 		'usernickname'	=>	$usernickname,
-		'args'			=>	$args
+		'messsage'		=>	$message
 	);
 	print_r($return);
 	return $return;
