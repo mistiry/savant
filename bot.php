@@ -100,7 +100,7 @@ while(1) {
 						}
 						break;
 					case "!nsregister":
-						if(isset($setting['i') && isset($setting['e'])) {
+						if(isset($setting['i']) && isset($setting['e'])) {
 							sendPRIVMSG("NickServ" "register ".$setting['i']." ".$setting['e']."");
 							sendPRIVMSG($ircdata['location'], "Register sent...please restart me without the -e parameter.");
 							//die("We just registered with NickServ, need to be restarted with the -e parameter.");
