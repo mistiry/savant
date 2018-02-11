@@ -170,7 +170,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 			$sqlstmt->execute();
 			$sqlstmt->store_result();
 			$sqlrows = $sqlstmt->num_rows;
-			if($sqlrows < 1) {
+			if($sqlrows < 2) {
 				$sqlstmt2 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
 				$sqlstmt2->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
 				$sqlstmt2->execute();
@@ -206,7 +206,7 @@ function logSeenData($nick,$hostmask,$message) {
 	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE lastseen=?, lastmessage=?");
 	$sqlstmt->bind_param('ssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$lastmessage);
 	$sqlstmt->execute();
-	if($mysqlconn->affected_rows > 0) {
+	if($mysqlconn->affected_rows > 1) {
 		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
 		return;
 	} else {
