@@ -93,7 +93,7 @@ function processIRCdata($data) {
 	);
 	if($debugmode == true) { 
 		print_r($return); 
-		echo "RAWDATA - $data");
+		echo "RAWDATA - $data";
 	}
 	return $return;
 }
