@@ -91,7 +91,10 @@ function processIRCdata($data) {
 		'commandargs'	=>	$commandargs,
 		'fullmessage'	=>	$fullmessage
 	);
-	if($debugmode == true) { print_r($return); }
+	if($debugmode == true) { 
+		print_r($return); 
+		echo "RAWDATA - $data");
+	}
 	return $return;
 }
 ?>
