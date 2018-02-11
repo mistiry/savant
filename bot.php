@@ -138,7 +138,7 @@ function getSeenData($requester,$location,$usertoquery) {
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysqli_fetch_assoc($result)) {
-			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: \"".$row['lastmessage']."\" ";
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying \"".$row['lastmessage']."\" ";
 		}
 	} else {
 		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
