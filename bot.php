@@ -160,7 +160,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sqlstmt = $mysqlconn->prepare('SELECT * FROM usertable WHERE nick = ?');
 	$sqlstmt->bind_param('s', $nominee);
 	$sqlstmt->execute();
-	$sqlstmt->store_result();
+	//$sqlstmt->store_result();
 	$result = $sqlstmt->get_result();
 	if($result->num_rows > 0) {
 		while($row = $result->fetch_assoc()) {
@@ -168,7 +168,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 			$sqlcheck = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
 			$sqlcheck->bind_param('s', $nomineefull);
 			$sqlstmt->execute();
-			$sqlstmt->store_result();
+			//$sqlstmt->store_result();
 			$result = $sqlstmt->get_result();
 			if($result->num_rows < 1) {
 				$sqlstmt2 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
@@ -226,10 +226,10 @@ function getSeenData($requester,$location,$usertoquery) {
 	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=? LIMIT 1");
 	$sqlstmt->bind_param('s',$usertoquery);
 	$sqlstmt->execute();
-	$sqlstmt->store_result();
+	//$sqlstmt->store_result();
 	$result = $sqlstmt->get_result();
 	if($result->num_rows > 0) {
-		while($row = mysqli_fetch_assoc($result)) {
+		while($row = $result->fetch_array(MYSQLI_NUM)) {
 			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
 		}
 	} else {
