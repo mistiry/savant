@@ -4,6 +4,7 @@
 set_time_limit(0);
 error_reporting(E_ALL & ~E_NOTICE );
 date_default_timezone_set("America/Chicago");
+system("clear");
 
 echo "Starting bot...\n";
 
@@ -15,6 +16,7 @@ $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
 $settings.= "e:";	//email, should only be used if you need to register with NickServ
+$settings.= "v:";	//verify code, should only be used to send the verify code to NickServ
 $settings.= "m:";	//mysql host to use
 $settings.= "u:";	//mysql user
 $settings.= "q:";	//mysql password
@@ -103,7 +105,16 @@ while(1) {
 						if(isset($setting['i']) && isset($setting['e'])) {
 							sendPRIVMSG("NickServ", "register ".$setting['i']." ".$setting['e']."");
 							sendPRIVMSG($ircdata['location'], "Register sent...please restart me without the -e parameter.");
-							//die("We just registered with NickServ, need to be restarted with the -e parameter.");
+							die("We just registered with NickServ, need to be restarted with the -e parameter, and include the -v parameter.");
+						} else {
+							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
+						}
+						break;
+					case "!nsverify":
+						if(isset($setting['v'])) {
+							sendPRIVMSG("NickServ", "VERIFY REGISTER ".$setting['n']." ".$setting['v']."");
+							sendPRIVMSG($ircdata['location'], "Register verify sent. Please restart me without -e or -v.");
+							die("We just registered with NickServ, need to be restarted with the -e  or -v parameters.");
 						} else {
 							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
 						}
