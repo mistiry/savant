@@ -74,7 +74,7 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$message = NULL; for ($i = 4; $i < count($ex); $i++) { $message .= $ex[$i] . ' '; }
+	$message = NULL; for ($i = 4; $i < count($pieces); $i++) { $message .= $ex[$i] . ' '; }
 	$return = array(
 		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
