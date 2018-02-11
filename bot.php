@@ -112,7 +112,7 @@ while(1) {
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
 						$nominationreason = NULL; for ($i = 1; $i < count($pieces); $i++) { $nominationreason .= $pieces[$i] . ' '; }
-						sendPRIVMSG($ircdata['usernickname'], nominateUser("".$ircdata['usernickname']."@".$ircdata['userhostname'].",$ircdata['commandargs'],$nominationreason));
+						sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['commandargs'],$nominationreason));
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
@@ -125,11 +125,21 @@ function nominateUser($nominator,$nominee,$nominationreason) {
 	global $debugmode;
 	global $mysqlconn;
 	global $setting;
+	$sql = "SELECT nick,hostmask FROM usertable WHERE nick='$nominee' LIMIT 1";
+	$result = mysqli_query($mysqlconn,$sql);
+	if(mysqli_num_rows($result) > 0) {
+		while($row = mysql_fetch_assoc($result)) {
+			$nominee = "".$row['nick']."@".$row['hostmask']."";
+		}
+	} else {
+		$return = "You can only nominate a user I have seen before. Has '$nominee' spoken here before?";
+		return $return;
+	}
 	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nominee','$timestamp','$nominationreason','new')";
 	if(mysqli_query($mysqlconn,$sql)) {
 		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nominee by $nominator, reason $nominationreason" }
 		$return = "Thank you for your nomination! It has been added to the queue.";
-		sendPRIVMSG($setting['o'], "A new nomination has been queued - $nominator nominates $nominee for voice.");
+		sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nominee' for voice.");
 	} else  {
 		if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nominee by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
 		$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
