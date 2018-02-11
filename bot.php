@@ -2,7 +2,7 @@
 // Prevent PHP from stopping the script after 30 sec
 // and hide notice messages
 set_time_limit(0);
-error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+error_reporting(E_ALL & ~E_NOTICE );
 date_default_timezone_set("America/Chicago");
 
 echo "Starting savant...\n";
@@ -130,13 +130,13 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	global $debugmode;
 	global $mysqlconn;
 	global $setting;
-	$sql = "SELECT nick,hostmask FROM usertable WHERE nick='$nominee' LIMIT 1";
+	$sql = "SELECT * FROM usertable WHERE nick='$nominee' LIMIT 1";
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
-		$row = mysqli_fetch_row($result);
-		$nomineehostmask = $row['hostmask'];
-		$nomineefull = "$nominee@".$nomineehostmask."";
-		$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
+		while( $row = mysqli_fetch_row($result)) {
+			$nomineefull = "".$nominee."@".$row['hostmask']."";
+			$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
+		}
 		if(mysqli_query($mysqlconn,$sql2)) {
 			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
 			$return = "Thank you for your nomination! It has been added to the queue.";
