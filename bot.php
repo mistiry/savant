@@ -22,10 +22,10 @@ empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
-empty($setting['d']) ? $debugmode = false : $debugmode = true ;
-if($errmsg != "") {
-  die($errmsg);
-}
+#empty($setting['d']) ? $debugmode = false : $debugmode = true ;
+#if($errmsg != "") {
+#  die($errmsg);
+#}
 
 if($debugmode == true) { echo "Debug mode is enabled.\n"; }
 
