@@ -84,7 +84,7 @@ while(1) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		} else {
 			//For each message, log it to the database for seen stats only for the regular channel
-			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']); }
+			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); }
 							
 			// * COMMAND PROCESSING * \\
 			$messagearray = $ircdata['messagearray'];
@@ -199,13 +199,13 @@ function sendPRIVMSG($location,$message) {
 	fputs($socket, "PRIVMSG ".$location." :".$message."\n");
 	return;
 }
-function logSeenData($nick,$hostmask,$message) {
+function logSeenData($nick,$hostmask,$message,$channel) {
 	global $mysqlconn;
 	global $timestamp;
 	global $debugmode;
 	$lastmessage = mysql_escape_string($message);
-	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE lastseen=?, lastmessage=?");
-	$sqlstmt->bind_param('ssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$lastmessage);
+	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastseenchannel,lastmessage) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE lastseen=?, lastmessage=?");
+	$sqlstmt->bind_param('ssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$channel,$lastmessage);
 	$sqlstmt->execute();
 	if($mysqlconn->affected_rows > 0) {
 		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
@@ -224,8 +224,8 @@ function getSeenData($requester,$location,$usertoquery) {
 	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; return $return; }
 	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; return $return; }
 	
-	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=?");
-	$sqlstmt->bind_param('s',$usertoquery);
+	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=? AND lastseenchannel=?");
+	$sqlstmt->bind_param('ss',$usertoquery,$location);
 	$sqlstmt->execute();
 	$sqlstmt->store_result();
 	$sqlstmt->bind_result($nick,$hostmask,$lastseen,$lastmessage);
