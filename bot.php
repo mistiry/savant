@@ -77,7 +77,7 @@ while(1) {
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
-				fputs($socket, "PRIVMSG $channel :$args\n";
+				fputs($socket, "PRIVMSG $channel :$args\n");
 				break;
           } 
     }
