@@ -70,7 +70,7 @@ function processIRCdata($data) {
 	$messagetype = $pieces[1];
 	$location = $pieces[2];
 	$userpieces1 = explode('@', $pieces[0]);
-	$userpieces2 = explode('!', $userpieces[0]);
+	$userpieces2 = explode('!', $userpieces1[0]);
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
