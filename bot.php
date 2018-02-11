@@ -128,7 +128,7 @@ function logSeenData($nick,$hostmask,$message) {
 			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $seentime message $message"; }
 			return;
 		} else {
-			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message"; }
+			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message - MySQL error ".mysqli_error($mysqlconn).""; }
 			return;
 		}
 }
