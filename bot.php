@@ -133,7 +133,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sql = "SELECT nick,hostmask FROM usertable WHERE nick='$nominee' LIMIT 1";
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
-		$row = mysql_fetch_assoc($result);
+		$row = mysqli_fetch_row($result);
 		$nomineehostmask = $row['hostmask'];
 		$nomineefull = "$nominee@$nomineehostmask";
 		$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
