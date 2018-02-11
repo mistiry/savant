@@ -55,7 +55,7 @@ while(1) {
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
-			fputs($socket, "PRIVMSG ".$ircdata['usernickname']." :Sorry, I do not accept private messages.\n";
+			fputs($socket, "PRIVMSG ".$ircdata['usernickname']." :Sorry, I do not accept private messages.\n");
 			} else {
 				//Look at messages for !command calls (first word must be the command)
 				$messagearray = $ircdata['messagearray'];
