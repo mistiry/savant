@@ -25,6 +25,18 @@ if($errmsg != "") {
   die($errmsg);
 }
 
+//Connect to MySQL
+$mysqlhost = "localhost";
+$mysqluser = "savant";
+$mysqlpass = "S@v@nTB0t";
+$mysqldb = "savant";
+$mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass, $mysqldb);
+if(!$mysqlconn) {
+  die("\tMySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
+} else {
+  echo "\tMySQL Connection Succeeded.\n";
+}
+
 // Tread lightly.
 $socket = fsockopen($setting['s'], $setting['p']);
 fputs($socket,"USER ".$setting['n']." ".$setting['n']." ".$setting['n']." ".$setting['n']." :".$setting['n']."\n");
@@ -55,34 +67,49 @@ while(1) {
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
-			fputs($socket, "PRIVMSG ".$ircdata['usernickname']." :Sorry, I do not accept private messages.\n");
+			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 			} else {
-				//Look at messages for !command calls (first word must be the command)
+				//For each message, log it to the database for seen stats
+				logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']);
+								
+				// * COMMAND PROCESSING * \\
 				$messagearray = $ircdata['messagearray'];
 				$firstword = trim($messagearray[1]);
-				switch ($firstword) {
-					//Stack cases together to accept multiple commands that do the same thing
-					case ".say":
-					case "!say":
-						$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
-						echo "[$timestamp]  $asdf";
-						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
-						break;
-					case ".join":
-					case "!join":
-						if($ircdata['location'] == $setting['o']) {
+				
+				//OpChannel Commands
+				if($ircdata['location'] == $setting['o']) {
+					switch($firstword) {
+						case ".join":
+						case "!join":
 							if($ircdata['commandargs'][0] !== "#") {
-								fputs($socket, "PRIVMSG ".$ircdata['location']." :That doesn't look like a channel name.\n");
+								sendPRIVMSG($ircdata['location'], "That doesn't look like a channel name.");
 							} else {
 								fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
 							}
-						}
-						break;
-				  }
+							break;				
+					}
+				//Regular channel commands
+				} else {
+					switch ($firstword) {
+						case ".say":
+						case "!say":
+							$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
+							echo "[$timestamp]  $asdf";
+							fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
+							break;
+					  }
+				}
+				// * END COMMAND PROCESSING * \\
+				
+				
 			}
     }
 }
-
+fucntion sendPRIVMSG($location,$message) {
+	global $socket;
+	fputs($socket, "PRIVMSG ".$location." :".$message."\n");
+	return;
+}
 function processIRCdata($data) {
 	global $debugmode;
 	$pieces = explode(' ', $data);
