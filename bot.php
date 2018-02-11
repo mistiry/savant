@@ -103,7 +103,7 @@ while(1) {
 						break;
 					case ".seen":
 					case "!seen":
-						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']);
+						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
 						break;
 				  }
 			}
