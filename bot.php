@@ -112,14 +112,14 @@ while(1) {
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
 						$nominationreason = NULL; for ($i = 1; $i < count($pieces); $i++) { $nominationreason .= $pieces[$i] . ' '; }
-						sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['commandargs'],$nominationreason));
+						sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
 		}
     }
 }
-function nominateUser($nominator,$nominee,$nominationreason) {
+function nominateUser($nominee,$nominator,$nominationreason) {
 	global $socket;
 	global $timestamp;
 	global $debugmode;
