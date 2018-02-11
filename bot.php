@@ -164,15 +164,15 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sqlstmt->bind_result($hostmask);
 	$sqlrows = $sqlstmt->num_rows;
 	echo "\n\n\n ".$sqlrows."\n\n\n";
-	if($sqlrows == "1") {
+	if($sqlrows == 1) {
 		while($sqlstmt->fetch()) {
 			$nomineefull = "".$nominee."@".$hostmask."";
 			$sqlstmt2 = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
 			$sqlstmt2->bind_param('s', $nomineefull);
 			$sqlstmt2->execute();
 			$sqlstmt2->store_result();
-			$sqlrows2 = $sqlstmt->num_rows;
-			if($sqlrows2 == "0") {
+			$sqlrows2 = $sqlstmt2->num_rows;
+			if($sqlrows2 == 0) {
 				$sqlstmt3 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
 				$sqlstmt3->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
 				$sqlstmt3->execute();
