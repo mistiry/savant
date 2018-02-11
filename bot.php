@@ -167,15 +167,15 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	if($sqlrows == "1") {
 		while($sqlstmt->fetch()) {
 			$nomineefull = "".$nominee."@".$hostmask."";
-			$sqlstmt = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
-			$sqlstmt->bind_param('s', $nomineefull);
-			$sqlstmt->execute();
-			$sqlstmt->store_result();
+			$sqlstmt2 = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
+			$sqlstmt2->bind_param('s', $nomineefull);
+			$sqlstmt2->execute();
+			$sqlstmt2->store_result();
 			$sqlrows2 = $sqlstmt->num_rows;
-			if($sqlrows == "0") {
-				$sqlstmt2 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
-				$sqlstmt2->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
-				$sqlstmt2->execute();
+			if($sqlrows2 == "0") {
+				$sqlstmt3 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
+				$sqlstmt3->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
+				$sqlstmt3->execute();
 			} else {
 				$return = "Thank you for nominating, however, the nominee '$nomineefull' has already been nominated.";
 				return $return;
