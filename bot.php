@@ -53,17 +53,33 @@ while(1) {
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
-        //Look at messages for !command calls (first word must be the command)
-		$messagearray = $ircdata['messagearray'];
-        $firstword = trim($messagearray[1]);
-        switch ($firstword) {
-            //Stack cases together to accept multiple commands that do the same thing
-			case "!say":
-				$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
-				echo "[$timestamp]  $asdf";
-				fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
-				break;
-          } 
+		//Ignore PMs, otherwise process each message to determine if we have an action
+		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
+			fputs($socket, "PRIVMSG ".$ircdata['usernickname']." :Sorry, I do not accept private messages.\n";
+			} else {
+				//Look at messages for !command calls (first word must be the command)
+				$messagearray = $ircdata['messagearray'];
+				$firstword = trim($messagearray[1]);
+				switch ($firstword) {
+					//Stack cases together to accept multiple commands that do the same thing
+					case ".say":
+					case "!say":
+						$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
+						echo "[$timestamp]  $asdf";
+						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
+						break;
+					case ".join":
+					case "!join":
+						if($ircdata['location'] == $setting['o']) {
+							if($ircdata['commandargs'][0] !== "#") {
+								fputs($socket, "PRIVMSG ".$ircdata['location']." :That doesn't look like a channel name.\n");
+							} else {
+								fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
+							}
+						}
+						break;
+				  }
+			}
     }
 }
 
