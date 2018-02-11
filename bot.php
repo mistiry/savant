@@ -157,20 +157,20 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	global $mysqlconn;
 	global $setting;
 	
-	$sqlstmt = $mysqlconn->prepare('SELECT * FROM usertable WHERE nick = ?');
+	$sqlstmt = $mysqlconn->prepare('SELECT hostmask FROM usertable WHERE nick = ?');
 	$sqlstmt->bind_param('s', $nominee);
 	$sqlstmt->execute();
-	//$sqlstmt->store_result();
-	$result = $sqlstmt->get_result();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($hostmask);
 	if($result->num_rows > 0) {
 		while($row = $result->fetch_assoc()) {
-			$nomineefull = "".$nominee."@".$row['hostmask']."";
+			$nomineefull = "".$nominee."@".$hostmask."";
 			$sqlcheck = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
 			$sqlcheck->bind_param('s', $nomineefull);
 			$sqlstmt->execute();
-			//$sqlstmt->store_result();
-			$result = $sqlstmt->get_result();
-			if($result->num_rows < 1) {
+			$sqlstmt->store_result();
+			$sqlrows = $sqlstmt->num_rows;
+			if($sqlrows < 1) {
 				$sqlstmt2 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
 				$sqlstmt2->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
 				$sqlstmt2->execute();
@@ -226,10 +226,11 @@ function getSeenData($requester,$location,$usertoquery) {
 	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=?");
 	$sqlstmt->bind_param('s',$usertoquery);
 	$sqlstmt->execute();
-	$result = $sqlstmt->get_result();
-	if($result->num_rows > 0) {
-		while($row = $result->fetch_array(MYSQLI_NUM)) {
-			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
+	$sqlstmt->bind_result($nick,$hostmask,$lastseen,$lastmessage);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($result->fetch()) {
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$hostmask."' on ".$lastseen." saying: '".$lastmessage."'";
 		}
 	} else {
 		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
