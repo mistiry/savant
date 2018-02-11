@@ -134,12 +134,13 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysql_fetch_assoc($result)) {
-			$nomineefull = "".$row['nick']."@".$row['hostmask']."";
+			$nomineehostmask = $row['hostmask'];
 		}
 	} else {
 		$return = "You can only nominate a user I have seen before. Has '$nominee' spoken here before?";
 		return $return;
 	}
+	$nomineefull = "$nominee@$nomineehostmask";
 	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
 	if(mysqli_query($mysqlconn,$sql)) {
 		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
