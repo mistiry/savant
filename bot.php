@@ -105,7 +105,7 @@ while(1) {
 						if(isset($setting['i']) && isset($setting['e'])) {
 							sendPRIVMSG("NickServ", "register ".$setting['i']." ".$setting['e']."");
 							sendPRIVMSG($ircdata['location'], "Register sent...please restart me without the -e parameter.");
-							die("We just registered with NickServ, need to be restarted with the -e parameter, and include the -v parameter.");
+							//die("We just registered with NickServ, need to be restarted with the -e parameter, and include the -v parameter.");
 						} else {
 							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
 						}
@@ -114,7 +114,7 @@ while(1) {
 						if(isset($setting['v'])) {
 							sendPRIVMSG("NickServ", "VERIFY REGISTER ".$setting['n']." ".$setting['v']."");
 							sendPRIVMSG($ircdata['location'], "Register verify sent. Please restart me without -e or -v.");
-							die("We just registered with NickServ, need to be restarted with the -e  or -v parameters.");
+							//die("We just registered with NickServ, need to be restarted with the -e  or -v parameters.");
 						} else {
 							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
 						}
@@ -162,7 +162,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sqlstmt->execute();
 	$sqlstmt->store_result();
 	$sqlstmt->bind_result($hostmask);
-	if($result->num_rows > 0) {
+	if($sqlstmt->num_rows > 0) {
 		while($row = $result->fetch_assoc()) {
 			$nomineefull = "".$nominee."@".$hostmask."";
 			$sqlcheck = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
@@ -226,6 +226,7 @@ function getSeenData($requester,$location,$usertoquery) {
 	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=?");
 	$sqlstmt->bind_param('s',$usertoquery);
 	$sqlstmt->execute();
+	$sqlstmt->store_result();
 	$sqlstmt->bind_result($nick,$hostmask,$lastseen,$lastmessage);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
