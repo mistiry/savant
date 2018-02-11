@@ -12,6 +12,7 @@ $settings.= "c:";	//channel to manage
 $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
+$settings.= "d";	//debug mode
 $setting = getopt($settings);
 $errmsg = "";
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
@@ -19,6 +20,7 @@ empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
+empty($setting['d']) ? $debugmode = true : true ;
 if($errmsg != "") {
   die($errmsg);
 }
@@ -64,6 +66,7 @@ while(1) {
 }
 
 function processIRCdata($data) {
+	global $debugmode;
 	$pieces = explode(' ', $data);
 	$messagearray = explode(':', $pieces[3]);
 	$command = $pieces[0];
@@ -74,7 +77,7 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$message = NULL; for ($i = 4; $i < count($pieces); $i++) { $message .= $ex[$i] . ' '; }
+	$message = NULL; for ($i = 4; $i < count($pieces); $i++) { $message .= $pieces[$i] . ' '; }
 	$return = array(
 		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
@@ -84,7 +87,7 @@ function processIRCdata($data) {
 		'usernickname'	=>	$usernickname,
 		'messsage'		=>	$message
 	);
-	print_r($return);
+	if($debugmode == true) { print_r($return); }
 	return $return;
 }
 ?>
