@@ -40,16 +40,15 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 
 while(1) {
     while($data = fgets($socket)) {
+		$timestamp = date("Y-m-d H:i:s");
 		$ircdata = processIRCdata($data);
-		
 		if(!in_array($ircdata['messagetype'], $ignore)) {
-			$timestamp = date("Y-m-d H:i:s");
 			echo "[$timestamp]  $data";
 		}
 		
 		if($ircdata['command'] == "PING") {
-			echo "[$timestamp]  PONG $ex[1]";
-            fputs($socket, "PONG $ex[1]\n");
+			echo "[$timestamp]  PONG ".$ircdata['messagetype']."";
+            fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
         //Look at messages for !command calls (first word must be the command)
@@ -58,7 +57,7 @@ while(1) {
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
-				fputs($socket, "PRIVMSG $channel :$args\n");
+				fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['message']."\n");
 				break;
           } 
     }
@@ -85,6 +84,7 @@ function processIRCdata($data) {
 		'usernickname'	=>	'$usernickname',
 		'args'			=>	'$args'
 	);
+	print_r($return);
 	return $return;
 }
 ?>
