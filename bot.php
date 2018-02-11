@@ -112,8 +112,11 @@ while(1) {
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
 						$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
-						if($nominee == $ircdata['usernickname']) { sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); }
-						sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+						if($nominee == $ircdata['usernickname']) { 
+							sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+						} else {
+							sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+						}
 						break;
 				  }
 			}
