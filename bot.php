@@ -2,7 +2,7 @@
 // Prevent PHP from stopping the script after 30 sec
 // and hide notice messages
 set_time_limit(0);
-error_reporting(E_ALL & ~E_NOTICE);
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 date_default_timezone_set("America/Chicago");
 
 echo "Starting savant...\n";
@@ -134,19 +134,19 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysql_fetch_assoc($result)) {
-			$nominee = "".$row['nick']."@".$row['hostmask']."";
+			$nomineefull = "".$row['nick']."@".$row['hostmask']."";
 		}
 	} else {
 		$return = "You can only nominate a user I have seen before. Has '$nominee' spoken here before?";
 		return $return;
 	}
-	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nominee','$timestamp','$nominationreason','new')";
+	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
 	if(mysqli_query($mysqlconn,$sql)) {
-		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nominee by $nominator, reason $nominationreason"; }
+		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
 		$return = "Thank you for your nomination! It has been added to the queue.";
-		sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nominee' for voice.");
+		sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: $nominationreason.");
 	} else  {
-		if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nominee by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
+		if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
 		$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
 	}
 	return $return;
