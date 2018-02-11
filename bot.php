@@ -5,6 +5,8 @@ set_time_limit(0);
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set("America/Chicago");
 
+echo "Starting savant..."
+
 //Bot Settings from command line options
 $settings = "s:";	//server to connect to
 $settings.= "p:";	//port to use
@@ -21,7 +23,7 @@ empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
-empty($setting['d']) ? $debugmode = true : true ;
+empty($setting['d']) ? $debugmode = false : $debugmode = true ;
 if($errmsg != "") {
   die($errmsg);
 }
@@ -33,10 +35,11 @@ $mysqlpass = "S@v@nTB0t";
 $mysqldb = "savant";
 $mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass, $mysqldb);
 if(!$mysqlconn) {
-  die("\tMySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
+  die("MySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
 } else {
-  echo "\tMySQL Connection Succeeded.\n";
+  echo "MySQL Connection Succeeded.\n";
 }
+sleep(2);
 
 // Tread lightly.
 $socket = fsockopen($setting['s'], $setting['p']);
@@ -100,8 +103,7 @@ while(1) {
 						break;
 					case ".seen":
 					case "!seen":
-						$reply = getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']);
-						sendPRIVMSG($ircdata['location'], $reply);
+						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']);
 						break;
 				  }
 			}
@@ -136,10 +138,10 @@ function getSeenData($requester,$location,$usertoquery) {
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysqli_fetch_assoc($result)) {
-			$return = "$requester - The user $usertoquery was last seen using hostmask ".$row['hostmask']." on ".$row['lastseen']." saying: \"".$row['lastmessage']."\"";
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: \"".$row['lastmessage']."\" ";
 		}
 	} else {
-		$return = "$requester - I was unable to locate seen data for $usertoquery.";
+		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
 	}
 	return $return;
 }
