@@ -135,7 +135,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	if(mysqli_num_rows($result) > 0) {
 		$row = mysqli_fetch_row($result);
 		$nomineehostmask = $row['hostmask'];
-		$nomineefull = "$nominee@$nomineehostmask";
+		$nomineefull = "$nominee@".$nomineehostmask."";
 		$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
 		if(mysqli_query($mysqlconn,$sql2)) {
 			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
