@@ -76,13 +76,13 @@ function processIRCdata($data) {
 	$usernickname = $userpieces3[1];
 	$args = NULL; for ($i = 4; $i < count($ex); $i++) { $args .= $ex[$i] . ' '; }
 	$return = array(
-		'message'		=>	'$message',
-		'messagetype'	=>	'$messagetype',
-		'command'		=>	'$command',
-		'location'		=>	'$location',
-		'userhostname'	=>	'$userhostname',
-		'usernickname'	=>	'$usernickname',
-		'args'			=>	'$args'
+		'message'		=>	$message,
+		'messagetype'	=>	$messagetype,
+		'command'		=>	$command,
+		'location'		=>	$location,
+		'userhostname'	=>	$userhostname,
+		'usernickname'	=>	$usernickname,
+		'args'			=>	$args
 	);
 	print_r($return);
 	return $return;
