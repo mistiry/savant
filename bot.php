@@ -135,21 +135,22 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysql_fetch_assoc($result)) {
 			$nomineehostmask = $row['hostmask'];
+			$nomineefull = "$nominee@$nomineehostmask";
+			$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
+			if(mysqli_query($mysqlconn,$sql2)) {
+				if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
+				$return = "Thank you for your nomination! It has been added to the queue.";
+				sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: $nominationreason");
+			} else  {
+				if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
+				$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
+			}
 		}
 	} else {
 		$return = "You can only nominate a user I have seen before. Has '$nominee' spoken here before?";
 		return $return;
 	}
-	$nomineefull = "$nominee@$nomineehostmask";
-	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";
-	if(mysqli_query($mysqlconn,$sql)) {
-		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
-		$return = "Thank you for your nomination! It has been added to the queue.";
-		sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: $nominationreason.");
-	} else  {
-		if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
-		$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
-	}
+	
 	return $return;
 }
 function sendPRIVMSG($location,$message) {
