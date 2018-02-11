@@ -59,6 +59,8 @@ while(1) {
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
+				$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
+				echo "[$timestamp]  $asdf";
 				fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
 				break;
           } 
