@@ -113,6 +113,7 @@ while(1) {
 						$nominee = $nomineepieces[0];
 						$nominationreason = NULL; for ($i = 1; $i < count($pieces); $i++) { $nominationreason .= $pieces[$i] . ' '; }
 						sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+						break;
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
