@@ -205,7 +205,7 @@ function logSeenData($nick,$hostmask,$message,$channel) {
 	global $debugmode;
 	$lastmessage = mysql_escape_string($message);
 	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastseenchannel,lastmessage) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE lastseen=?, lastmessage=?");
-	$sqlstmt->bind_param('ssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$channel,$lastmessage);
+	$sqlstmt->bind_param('sssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$channel,$lastmessage);
 	$sqlstmt->execute();
 	if($mysqlconn->affected_rows > 0) {
 		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
