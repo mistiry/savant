@@ -5,7 +5,7 @@ set_time_limit(0);
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set("America/Chicago");
 
-echo "Starting savant..."
+echo "Starting savant...";
 
 //Bot Settings from command line options
 $settings = "s:";	//server to connect to
