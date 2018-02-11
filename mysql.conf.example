@@ -1,4 +1,0 @@
-$mysqlhost = "mysqlhost";
-$mysqluser = "mysqluser";
-$mysqlpass = "mysqlpass";
-$mysqldb   = "mysqldb";
