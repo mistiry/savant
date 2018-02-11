@@ -163,7 +163,6 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sqlstmt->store_result();
 	$sqlstmt->bind_result($hostmask);
 	$sqlrows = $sqlstmt->num_rows;
-	echo "\n\n\n ".$sqlrows."\n\n\n";
 	if($sqlrows == 1) {
 		while($sqlstmt->fetch()) {
 			$nomineefull = "".$nominee."@".$hostmask."";
