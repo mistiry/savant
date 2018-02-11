@@ -28,6 +28,8 @@ if($errmsg != "") {
   die($errmsg);
 }
 
+if($debugmode == true) { echo "Debug mode is enabled.\n"; }
+
 //Connect to MySQL
 $mysqlhost = "localhost";
 $mysqluser = "savant";
@@ -73,8 +75,8 @@ while(1) {
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		} else {
-			//For each message, log it to the database for seen stats
-			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']);
+			//For each message, log it to the database for seen stats only for the regular channel
+			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']); }
 							
 			// * COMMAND PROCESSING * \\
 			$messagearray = $ircdata['messagearray'];
@@ -90,7 +92,13 @@ while(1) {
 						} else {
 							fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
 						}
-						break;				
+						break;
+					case ".debug":
+					case "!debug":
+						if($debugmode == false) { $debugmode == true; $debugstatus = "ON"; }
+						if($debugmode == true) { $debugmode == false; $debugstatus = "OFF"; }
+						sendPRIVMSG($ircdata['location'], "Debug mode is now $debugstatus");
+						break;
 				}
 			//Regular channel commands
 			} else {
@@ -121,7 +129,7 @@ function logSeenData($nick,$hostmask,$message) {
 		global $timestamp;
 		global $debugmode;
 		$seentime = date("Y-m-d H:i:s T");
-		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$seentime','$message') ON DUPLICATE KEY UPDATE lastseen='$seentime', lastmessage='$message'";
+		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$seentime','$message') ON DUPLICAE KEY UPDATE lastseen='$seentime', lastmessage='$message'";
 		if(mysqli_query($mysqlconn,$sql)) {
 			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $seentime message $message"; }
 			return;
@@ -142,7 +150,7 @@ function getSeenData($requester,$location,$usertoquery) {
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysqli_fetch_assoc($result)) {
-			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'.";
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
 		}
 	} else {
 		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
