@@ -79,8 +79,10 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$fullmessage = substr($pieces[3], 1);
+	$fullmessagearray = explode(":", $data);
+	$fullmessage = $fullmessagearray[2];
 	$commandargs = NULL; for ($i = 4; $i < count($pieces); $i++) { $commandargs .= $pieces[$i] . ' '; }
+	$commandargs = trim($commandargs);
 	$return = array(
 		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
