@@ -59,7 +59,7 @@ while(1) {
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
-				fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['message']."\n");
+				fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
 				break;
           } 
     }
@@ -77,7 +77,8 @@ function processIRCdata($data) {
 	$userpieces3 = explode(':', $userpieces2[0]);
 	$userhostname = $userpieces1[1];
 	$usernickname = $userpieces3[1];
-	$message = NULL; for ($i = 4; $i < count($pieces); $i++) { $message .= $pieces[$i] . ' '; }
+	$commandargs = NULL; for ($i = 4; $i < count($pieces); $i++) { $commandargs .= $pieces[$i] . ' '; }
+	$fullmessage = NULL; for ($i = 4; $i < count($pieces); $i++) { $commandargs .= $pieces[$i] . ' '; }
 	$return = array(
 		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
@@ -85,7 +86,8 @@ function processIRCdata($data) {
 		'location'		=>	$location,
 		'userhostname'	=>	$userhostname,
 		'usernickname'	=>	$usernickname,
-		'messsage'		=>	$message
+		'commandargs'	=>	$commandargs,
+		'fullmessage'	=>	$fullmessage
 	);
 	if($debugmode == true) { print_r($return); }
 	return $return;
