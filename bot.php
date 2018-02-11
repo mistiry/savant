@@ -59,7 +59,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 
 while(1) {
     while($data = fgets($socket)) {
-		$timestamp = date("Y-m-d H:i:s");
+		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
 			echo "[$timestamp]  $data";
@@ -107,11 +107,34 @@ while(1) {
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
 						break;
+					case ".nominate":
+					case "!nominate":
+						$nomineepieces = explode(" ",$ircdata['commandargs'];
+						$nominee = $nomineepieces[0];
+						$nominationreason = NULL; for ($i = 1; $i < count($pieces); $i++) { $nominationreason .= $pieces[$i] . ' '; }
+						sendPRIVMSG($ircdata['usernickname'], nominateUser("".$ircdata['usernickname']."@".$ircdata['userhostname'].",$ircdata['commandargs'],$nominationreason));
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
 		}
     }
+}
+function nominateUser($nominator,$nominee,$nominationreason) {
+	global $socket;
+	global $timestamp;
+	global $debugmode;
+	global $mysqlconn;
+	global $setting;
+	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nominee','$timestamp','$nominationreason','new')";
+	if(mysqli_query($mysqlconn,$sql)) {
+		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nominee by $nominator, reason $nominationreason" }
+		$return = "Thank you for your nomination! It has been added to the queue.";
+		sendPRIVMSG($setting['o'], "A new nomination has been queued - $nominator nominates $nominee for voice.");
+	} else  {
+		if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nominee by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
+		$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
+	}
+	return $return;
 }
 function sendPRIVMSG($location,$message) {
 	global $socket;
@@ -122,13 +145,12 @@ function logSeenData($nick,$hostmask,$message) {
 		global $mysqlconn;
 		global $timestamp;
 		global $debugmode;
-		$seentime = date("Y-m-d H:i:s T");
-		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$seentime','$message') ON DUPLICAE KEY UPDATE lastseen='$seentime', lastmessage='$message'";
+		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$message') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$message'";
 		if(mysqli_query($mysqlconn,$sql)) {
-			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $seentime message $message"; }
+			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $message"; }
 			return;
 		} else {
-			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message - MySQL error ".mysqli_error($mysqlconn).""; }
+			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $timestamp message $message - MySQL error ".mysqli_error($mysqlconn).""; }
 			return;
 		}
 }
