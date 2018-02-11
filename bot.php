@@ -5,7 +5,7 @@ set_time_limit(0);
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set("America/Chicago");
 
-//Server Settings from command line options
+//Bot Settings from command line options
 $settings = "s:";	//server to connect to
 $settings.= "p:";	//port to use
 $settings.= "c:";	//channel to manage
@@ -40,27 +40,21 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 
 while(1) {
     while($data = fgets($socket)) {
-        $ex = explode(' ', $data);
-        if(!in_array($ex[1],$ignore)) {
-          $timestamp = date("Y-m-d H:i:s");
-          echo "[$timestamp]  $data";
-        }
-        $rawcmd = explode(':', $ex[3]);
-        $channel = $ex[2];
-        $nicka = explode('@', $ex[0]);
-        $nickb = explode('!', $nicka[0]);
-        $nickc = explode(':', $nickb[0]);
-        $host = $nicka[1];
-        $nick = $nickc[1];
-        if($ex[0] == "PING"){
-            echo "[$timestamp]  PONG $ex[1]";
+		$ircdata = processIRCdata($data);
+		
+		if(!in_array($ircdata['messagetype'], $ignore)) {
+			$timestamp = date("Y-m-d H:i:s");
+			echo "[$timestamp]  $data";
+		}
+		
+		if($ircdata['command'] == "PING") {
+			echo "[$timestamp]  PONG $ex[1]";
             fputs($socket, "PONG $ex[1]\n");
-        }
-
-        $args = NULL; for ($i = 4; $i < count($ex); $i++) { $args .= $ex[$i] . ' '; }
-        
+		}
+		
         //Look at messages for !command calls (first word must be the command)
-        $firstword = trim($rawcmd[1]);
+		$message = $ircdata['message'];
+        $firstword = trim($message[1]);
         switch ($firstword) {
             //Stack cases together to accept multiple commands that do the same thing
 			case "!say":
@@ -68,5 +62,29 @@ while(1) {
 				break;
           } 
     }
+}
+
+function processIRCdata($data) {
+	$pieces = explode(' ', $data);
+	$message = explode(':', $pieces[3]);
+	$command = $pieces[0];
+	$messagetype = $pieces[1];
+	$location = $pieces[2];
+	$userpieces1 = explode('@', $pieces[0]);
+	$userpieces2 = explode('!', $userpieces[0]);
+	$userpieces3 = explode(':', $userpieces2[0]);
+	$userhostname = $userpieces1[1];
+	$usernickname = $userpieces3[1];
+	$args = NULL; for ($i = 4; $i < count($ex); $i++) { $args .= $ex[$i] . ' '; }
+	$return = array(
+		'message'		=>	'$message',
+		'messagetype'	=>	'$messagetype',
+		'command'		=>	'$command',
+		'location'		=>	'$location',
+		'userhostname'	=>	'$userhostname',
+		'usernickname'	=>	'$usernickname',
+		'args'			=>	'$args'
+	);
+	return $return;
 }
 ?>
