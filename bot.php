@@ -12,9 +12,10 @@ $settings.= "c:";	//channel to manage
 $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
-$settings.= "d";	//debug mode
+$settings.= "d:";	//debug mode
 $setting = getopt($settings);
 $errmsg = "";
+$debugmode = false;
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
 empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
@@ -97,6 +98,11 @@ while(1) {
 						echo "[$timestamp]  $asdf";
 						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
 						break;
+					case ".seen":
+					case "!seen":
+						$reply = getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']);
+						sendPRIVMSG($ircdata['location'], $reply);
+						break;
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
@@ -111,14 +117,32 @@ function sendPRIVMSG($location,$message) {
 function logSeenData($nick,$hostmask,$message) {
 		global $mysqlconn;
 		global $timestamp;
+		global $debugmode;
 		$seentime = date("Y-m-d H:i:s T");
 		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$seentime','$message') ON DUPLICATE KEY UPDATE lastseen='$seentime', lastmessage='$message'";
 		if(mysqli_query($mysqlconn,$sql)) {
-			echo "[$timestamp]  Updated seen data: $nick@$hostname lastseen $seentime message $message";
+			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $seentime message $message"; }
+			return;
 		} else {
-			echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message";
+			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message"; }
+			return;
 		}
-}	
+}
+function getSeenData($requester,$location,$usertoquery) {
+	global $mysqlconn;
+	global $timestamp;
+	global $debugmode;
+	$sql = "SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick='$usertoquery' LIMIT 1";
+	$result = mysqli_query($mysqlconn,$sql);
+	if(mysqli_num_rows($result) > 0) {
+		while($row = mysqli_fetch_assoc($result)) {
+			$return = "$requester - The user $usertoquery was last seen using hostmask ".$row['hostmask']." on ".$row['lastseen']." saying: \"".$row['lastmessage']."\"";
+		}
+	} else {
+		$return = "$requester - I was unable to locate seen data for $usertoquery.";
+	}
+	return $return;
+}
 function processIRCdata($data) {
 	global $debugmode;
 	$pieces = explode(' ', $data);
