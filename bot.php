@@ -68,48 +68,57 @@ while(1) {
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
-			} else {
-				//For each message, log it to the database for seen stats
-				logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']);
-								
-				// * COMMAND PROCESSING * \\
-				$messagearray = $ircdata['messagearray'];
-				$firstword = trim($messagearray[1]);
-				
-				//OpChannel Commands
-				if($ircdata['location'] == $setting['o']) {
-					switch($firstword) {
-						case ".join":
-						case "!join":
-							if($ircdata['commandargs'][0] !== "#") {
-								sendPRIVMSG($ircdata['location'], "That doesn't look like a channel name.");
-							} else {
-								fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
-							}
-							break;				
-					}
-				//Regular channel commands
-				} else {
-					switch ($firstword) {
-						case ".say":
-						case "!say":
-							$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
-							echo "[$timestamp]  $asdf";
-							fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
-							break;
-					  }
+		} else {
+			//For each message, log it to the database for seen stats
+			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']);
+							
+			// * COMMAND PROCESSING * \\
+			$messagearray = $ircdata['messagearray'];
+			$firstword = trim($messagearray[1]);
+			
+			//OpChannel Commands
+			if($ircdata['location'] == $setting['o']) {
+				switch($firstword) {
+					case ".join":
+					case "!join":
+						if($ircdata['commandargs'][0] !== "#") {
+							sendPRIVMSG($ircdata['location'], "That doesn't look like a channel name.");
+						} else {
+							fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
+						}
+						break;				
 				}
-				// * END COMMAND PROCESSING * \\
-				
-				
+			//Regular channel commands
+			} else {
+				switch ($firstword) {
+					case ".say":
+					case "!say":
+						$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
+						echo "[$timestamp]  $asdf";
+						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
+						break;
+				  }
 			}
+			// * END COMMAND PROCESSING * \\
+		}
     }
 }
-fucntion sendPRIVMSG($location,$message) {
+function sendPRIVMSG($location,$message) {
 	global $socket;
 	fputs($socket, "PRIVMSG ".$location." :".$message."\n");
 	return;
 }
+function logSeenData($nick,$hostmask,$message) {
+		global $mysqlconn;
+		global $timestamp;
+		$seentime = date("Y-m-d H:i:s T");
+		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$seentime','$message') ON DUPLICATE KEY UPDATE lastseen='$seentime', lastmessage='$message'";
+		if(mysqli_query($mysqlconn,$sql)) {
+			echo "[$timestamp]  Updated seen data: $nick@$hostname lastseen $seentime message $message";
+		} else {
+			echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $seentime message $message";
+		}
+}	
 function processIRCdata($data) {
 	global $debugmode;
 	$pieces = explode(' ', $data);
