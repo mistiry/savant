@@ -41,9 +41,9 @@ if($errmsg != "") {
 if($debugmode == true) { echo "Debug mode is enabled.\n"; }
 
 //Connect to MySQL
-$mysqlconn = mysqli_connect($setting['m'],$setting['u'],$setting['q'],$setting['b']);
-if(!$mysqlconn) {
-	die("MySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
+$mysqlconn = new mysqli($setting['m'],$setting['u'],$setting['q'],$setting['b']);
+if($mysqlconn->connect_errno) {
+	die("MySQL Connection failed: ". $mysqlconn->connect_error ."\n");
 } else {
 	echo "MySQL Connection Succeeded.\n";
 }
@@ -156,21 +156,30 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	global $debugmode;
 	global $mysqlconn;
 	global $setting;
-	$sql = "SELECT * FROM usertable WHERE nick='$nominee' LIMIT 1";
-	$result = mysqli_query($mysqlconn,$sql);
-	if(mysqli_num_rows($result) > 0) {
-		while($row = mysqli_fetch_assoc($result)) {
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT * FROM usertable WHERE nick = ?');
+	$sqlstmt->bind_param('s', $nominee);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$result = $sqlstmt->get_result();
+	if($result->num_rows > 0) {
+		while($row = $result->fetch_assoc()) {
 			$nomineefull = "".$nominee."@".$row['hostmask']."";
-			$sqlcheck = "SELECT * FROM nominations WHERE nominee='$nomineefull'";
-			$resultcheck = mysqli_query($mysqlconn,$sqlcheck);
-			if(mysqli_num_rows($resultcheck) < 1) {
-				$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";	
+			$sqlcheck = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
+			$sqlcheck->bind_param('s', $nomineefull);
+			$sqlstmt->execute();
+			$sqlstmt->store_result();
+			$result = $sqlstmt->get_result();
+			if($result->num_rows < 1) {
+				$sqlstmt2 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
+				$sqlstmt2->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
+				$sqlstmt2->execute();
 			} else {
 				$return = "Thank you for nominating, however, the nominee '$nomineefull' has already been nominated.";
 				return $return;
 			}
 		}
-		if(mysqli_query($mysqlconn,$sql2)) {
+		if($mysqlconn->affected_rows > 0) {
 			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
 			$return = "Thank you for your nomination! It has been added to the queue.";
 			sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
@@ -194,8 +203,10 @@ function logSeenData($nick,$hostmask,$message) {
 	global $timestamp;
 	global $debugmode;
 	$lastmessage = mysql_escape_string($message);
-	$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$lastmessage') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'";
-	if(mysqli_query($mysqlconn,$sql)) {
+	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$lastmessage') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'");
+	$sqlstmt->bind_param('ssssss',$nick,$hostmask,$timestamp,$lastmessage,$timestamp,$lastmessage);
+	$sqlstmt->execute();
+	if($mysqlconn->affected_rows > 0) {
 		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
 		return;
 	} else {
@@ -211,9 +222,13 @@ function getSeenData($requester,$location,$usertoquery) {
 	if($usertoquery == $setting['n']) { $return = "I am right here..."; return $return; }
 	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; return $return; }
 	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; return $return; }
-	$sql = "SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick='$usertoquery' LIMIT 1";
-	$result = mysqli_query($mysqlconn,$sql);
-	if(mysqli_num_rows($result) > 0) {
+	
+	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=? LIMIT 1");
+	$sqlstmt->bind_param('s',$usertoquery);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$result = $sqlstmt->get_result();
+	if($result->num_rows > 0) {
 		while($row = mysqli_fetch_assoc($result)) {
 			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
 		}
