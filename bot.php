@@ -168,7 +168,7 @@ function logSeenData($nick,$hostmask,$message) {
 		global $timestamp;
 		global $debugmode;
 		$lastmessage = mysql_escape_string($message);
-		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$message') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'";
+		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$lastmessage') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'";
 		if(mysqli_query($mysqlconn,$sql)) {
 			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
 			return;
