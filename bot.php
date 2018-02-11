@@ -52,9 +52,10 @@ sleep(2);
 $socket = fsockopen($setting['s'], $setting['p']);
 fputs($socket,"USER ".$setting['n']." ".$setting['n']." ".$setting['n']." ".$setting['n']." :".$setting['n']."\n");
 fputs($socket,"NICK ".$setting['n']."\n");
-if($nspass != "") {
+if(isset($setting['i']) && !isset($setting['e'])) {
 	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
+
 fputs($socket,"JOIN ".$setting['c']."\n");
 fputs($socket,"JOIN ".$setting['o']."\n");
 
