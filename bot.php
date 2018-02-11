@@ -2,49 +2,44 @@
 // Prevent PHP from stopping the script after 30 sec
 // and hide notice messages
 set_time_limit(0);
+error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set("America/Chicago");
 
 //Server Settings from command line options
-$sopts = "s:";
-$sopts.= "p:";
-$sopts.= "c:";
-$sopts.= "n:";
-$lopts = array(
-               "nspass:",
-              );
-$options = getopt($sopts,$lopts);
+$settings = "s:";	//server to connect to
+$settings.= "p:";	//port to use
+$settings.= "c:";	//channel to manage
+$settings.= "o:";	//operations channel
+$settings.= "n:";	//nickname
+$settings.= "i:";	//nickserv password
+$setting = getopt($settings);
 
-$chan = $options['c'];
-$server = $options['s'];
-$port = $options['p'];
-$nick = $options['n'];
-$nspass = $options['nspass'];
+$chan = $setting['c'];
+$server = $setting['s'];
+$port = $setting['p'];
+$nick = $setting['n'];
+$nspass = $setting['i'];
+$opchan = $setting['o'];
 $errmsg = "";
 
-if($chan == "") {
-  $errmsg.= "No channel provided!\n";
-}
-if($server == "") {
-  $errmsg.= "No server provided!\n";
-}
-if($port == "") {
-  $errmsg.= "No port provided!\n";
-}
-if($nick == "") {
-  $errmsg.= "No nick provided!\n";
-}
+empty($setting['c']) ? $errmsg.= "No channel provided!\n";
+empty($setting['s']) ? $errmsg.= "No server provided!\n";
+empty($setting['p']) ? $errmsg.= "No port provided!\n";
+empty($setting['n']) ? $errmsg.= "No nickname provided!\n";
+empty($setting['o']) ? $errmsg.= "No opchannel provided!\n";
 if($errmsg != "") {
   die($errmsg);
 }
 
 // Tread lightly.
-$socket = fsockopen("$server", $port);
-fputs($socket,"USER $nick $nick $nick $nick :$nick\n");
-fputs($socket,"NICK $nick\n");
+$socket = fsockopen($setting['s'], $setting['p']);
+fputs($socket,"USER $setting['n'] $setting['n'] $setting['n'] $setting['n'] :$setting['n']\n");
+fputs($socket,"NICK $setting['n']\n");
 if($nspass != "") {
   fputs($socket,"PRIVMSG NickServ :identify $nspass\n");
 }
-fputs($socket,"JOIN ".$chan."\n");
+fputs($socket,"JOIN ".$setting['c']."\n");
+fputs($socket,"JOIN ".$setting['o']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
 $ignore = array('001','002','003','004','005','250','251','252','253',
