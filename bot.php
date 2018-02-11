@@ -137,7 +137,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 			$nomineefull = "".$nominee."@".$row['hostmask']."";
 			$sqlcheck = "SELECT * FROM nominations WHERE nominee='$nomineefull'";
 			$resultcheck = mysqli_query($mysqlconn,$sqlcheck);
-			if(mysqli_num_rows($resultcheck) > 0) {
+			if(mysqli_num_rows($resultcheck) < 1) {
 				$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";	
 			} else {
 				$return = "Thank you for nominating, however, the nominee '$nomineefull' has already been nominated.";
