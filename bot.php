@@ -137,7 +137,7 @@ function nominateUser($nominator,$nominee,$nominationreason) {
 	}
 	$sql = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nominee','$timestamp','$nominationreason','new')";
 	if(mysqli_query($mysqlconn,$sql)) {
-		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nominee by $nominator, reason $nominationreason" }
+		if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nominee by $nominator, reason $nominationreason"; }
 		$return = "Thank you for your nomination! It has been added to the queue.";
 		sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nominee' for voice.");
 	} else  {
