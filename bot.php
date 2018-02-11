@@ -13,20 +13,12 @@ $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
 $setting = getopt($settings);
-
-$chan = $setting['c'];
-$server = $setting['s'];
-$port = $setting['p'];
-$nick = $setting['n'];
-$nspass = $setting['i'];
-$opchan = $setting['o'];
 $errmsg = "";
-
-empty($setting['c']) ? $errmsg.= "No channel provided!\n";
-empty($setting['s']) ? $errmsg.= "No server provided!\n";
-empty($setting['p']) ? $errmsg.= "No port provided!\n";
-empty($setting['n']) ? $errmsg.= "No nickname provided!\n";
-empty($setting['o']) ? $errmsg.= "No opchannel provided!\n";
+empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
+empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
+empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
+empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
+empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
 if($errmsg != "") {
   die($errmsg);
 }
