@@ -25,10 +25,10 @@ if($errmsg != "") {
 
 // Tread lightly.
 $socket = fsockopen($setting['s'], $setting['p']);
-fputs($socket,"USER $setting['n'] $setting['n'] $setting['n'] $setting['n'] :$setting['n']\n");
-fputs($socket,"NICK $setting['n']\n");
+fputs($socket,"USER ".$setting['n']." ".$setting['n']." ".$setting['n']." ".$setting['n']." :".$setting['n']."\n");
+fputs($socket,"NICK ".$setting['n']."\n");
 if($nspass != "") {
-  fputs($socket,"PRIVMSG NickServ :identify $nspass\n");
+  fputs($socket,"PRIVMSG NickServ :identify ".$setting['i']."\n");
 }
 fputs($socket,"JOIN ".$setting['c']."\n");
 fputs($socket,"JOIN ".$setting['o']."\n");
