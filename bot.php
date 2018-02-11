@@ -33,7 +33,7 @@ if($debugmode == true) { echo "Debug mode is enabled.\n"; }
 
 //Connect to MySQL
 include($setting['m']);
-$mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass, $mysqldb);
+$mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass,$mysqldb);
 if(!$mysqlconn) {
   die("MySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
 } else {
