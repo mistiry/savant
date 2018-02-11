@@ -231,7 +231,7 @@ function getSeenData($requester,$location,$usertoquery) {
 	$sqlstmt->bind_result($nick,$hostmask,$lastseen,$lastmessage);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		while($result->fetch()) {
+		while($sqlstmt->fetch()) {
 			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$hostmask."' on ".$lastseen." saying: '".$lastmessage."'";
 		}
 	} else {
