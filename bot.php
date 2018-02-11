@@ -163,7 +163,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	$sqlstmt->store_result();
 	$sqlstmt->bind_result($hostmask);
 	if($sqlstmt->num_rows > 0) {
-		while($row = $result->fetch_assoc()) {
+		while($sqlstmt->fetch()) {
 			$nomineefull = "".$nominee."@".$hostmask."";
 			$sqlcheck = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
 			$sqlcheck->bind_param('s', $nomineefull);
