@@ -135,14 +135,14 @@ function getSeenData($requester,$location,$usertoquery) {
 	global $timestamp;
 	global $debugmode;
 	global $setting;
-	if($usertoquery == $setting['n']) { $return = "I am right here..."; }
-	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; }
-	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; }
+	if($usertoquery == $setting['n']) { $return = "I am right here..."; return $return; }
+	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; return $return; }
+	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; return $return; }
 	$sql = "SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick='$usertoquery' LIMIT 1";
 	$result = mysqli_query($mysqlconn,$sql);
 	if(mysqli_num_rows($result) > 0) {
 		while($row = mysqli_fetch_assoc($result)) {
-			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'.";
 		}
 	} else {
 		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
