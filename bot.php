@@ -223,10 +223,9 @@ function getSeenData($requester,$location,$usertoquery) {
 	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; return $return; }
 	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; return $return; }
 	
-	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=? LIMIT 1");
+	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=?");
 	$sqlstmt->bind_param('s',$usertoquery);
 	$sqlstmt->execute();
-	//$sqlstmt->store_result();
 	$result = $sqlstmt->get_result();
 	if($result->num_rows > 0) {
 		while($row = $result->fetch_array(MYSQLI_NUM)) {
