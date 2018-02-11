@@ -109,7 +109,7 @@ while(1) {
 						break;
 					case ".nominate":
 					case "!nominate":
-						$nomineepieces = explode(" ",$ircdata['commandargs'];
+						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
 						$nominationreason = NULL; for ($i = 1; $i < count($pieces); $i++) { $nominationreason .= $pieces[$i] . ' '; }
 						sendPRIVMSG($ircdata['usernickname'], nominateUser("".$ircdata['usernickname']."@".$ircdata['userhostname'].",$ircdata['commandargs'],$nominationreason));
