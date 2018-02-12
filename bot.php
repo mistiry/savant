@@ -67,7 +67,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 );
 
 $epoch = time();
-$nextnamescheck = $epoch + 180;
+$nextnamescheck = $epoch + 3;
 
 while(1) {
     while($data = fgets($socket)) {
@@ -100,7 +100,8 @@ while(1) {
 			}
 		}
 		
-		//if(shouldBeVoiced($ircdata['usernickname'])
+		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { plusV($ircdata['usernickname']; }
+		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { minusV($ircdata['usernickname']; }
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
@@ -184,7 +185,21 @@ function isUserVoiced($nick) {
 	}
 }
 function shouldBeVoiced($nick) {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+	global $debugmode;
 	
+	$sqlstmt = $mysqlconn->prepare('SELECT nick, shouldhavevoice FROM usertable WHERE nick=?');
+	$sqlstmt->bind_param('s',$nick);
+	$sqlstmt->execute();
+	$sqlstmt->bind_result($resultnick,$shouldhavevoice);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		return true;
+	} else {
+		return false;
+	}
 }
 function voiceAction($type,$id) {
 	global $timestamp;
