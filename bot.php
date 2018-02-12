@@ -101,8 +101,16 @@ while(1) {
 			}
 		}
 		
-		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { plusV($ircdata['usernickname']); fputs($socket, "NAMES ".$setting['c']."\n"); }
-		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { minusV($ircdata['usernickname']); fputs($socket, "NAMES ".$setting['c']."\n"); }
+		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { 
+			plusV($ircdata['usernickname']); 
+			fputs($socket, "NAMES ".$setting['c']."\n"); 
+			echo "[$timestamp]  User $ircdata['usernickname'] should be voiced and isn't, I will grant it."
+		}
+		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { 
+			minusV($ircdata['usernickname']); 
+			fputs($socket, "NAMES ".$setting['c']."\n"); 
+			echo "[$timestamp]  User $ircdata['usernickname'] shouldn't be voiced and is, I will remove it."
+		}
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
