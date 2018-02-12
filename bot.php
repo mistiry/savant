@@ -69,7 +69,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 $epoch = time();
 $nextnamescheck = $epoch + 1;
 $voicedusers = array();
-$shouldhavevoice = array();
+$shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
@@ -103,12 +103,12 @@ while(1) {
 			}
 		}
 		
-		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { 
+		if(in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == false) { 
 			plusV($ircdata['usernickname']); 
 			fputs($socket, "NAMES ".$setting['c']."\n"); 
 			echo "[$timestamp]  User ".$ircdata['usernickname']." should be voiced and isn't, I will grant it.\n";
 		}
-		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { 
+		if(!in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == true) { 
 			minusV($ircdata['usernickname']); 
 			fputs($socket, "NAMES ".$setting['c']."\n"); 
 			echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
@@ -208,7 +208,6 @@ function createShouldBeVoicedArray() {
 			if($hasvoice == 1) {
 				array_push($shouldhavevoice,$resultnick);
 				print_r($shouldhavevoice);
-				return $shouldhavevoice;
 			} else {
 				echo "[$timestamp]  Not adding $resultnick to array.\n";
 			}
