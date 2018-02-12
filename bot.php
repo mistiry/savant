@@ -68,6 +68,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 
 $epoch = time();
 $nextnamescheck = $epoch + 3;
+$voicedusers = array();
 
 while(1) {
     while($data = fgets($socket)) {
@@ -244,6 +245,7 @@ function voiceAction($type,$id) {
 			}
 		}
 	}
+	fputs($socket, "NAMES ".$setting['c']."\n");
 	return;
 }
 function plusV($nick) {
