@@ -104,7 +104,7 @@ while(1) {
 			}
 			$shouldhavevoice = createShouldBeVoicedArray();
 			foreach($shouldhavevoice as $voiceuser) {
-				if(!in_array($voiceuser,$voicedusers) {
+				if(!in_array($voiceuser,$voicedusers)) {
 					plusV($ircdata['usernickname'];
 				}
 			}
