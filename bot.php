@@ -69,7 +69,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 $epoch = time();
 $nextnamescheck = $epoch + 3;
 $voicedusers = array();
-$shouldbevoiced = array();
+$shouldhavevoice = array();
 createShouldBeVoicedArray();
 
 while(1) {
