@@ -152,6 +152,9 @@ function voiceAction($type,$id) {
 	global $timestamp;
 	global $mysqlconn;
 	global $setting;
+	global $debugmode;
+	
+	if($debugmode == true) { echo "[$timestamp]  Received a request to perform voice action $type for id $id"; }
 	
 	if($type == "grant") {
 		$now = time();
