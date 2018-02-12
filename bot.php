@@ -66,6 +66,10 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
                 '254','255','265','266','372','375','376','366',
 );
 
+$epoch = time();
+$nextnamescheck = $epoch + 300;
+$voicedusers = array();
+
 while(1) {
     while($data = fgets($socket)) {
 		$timestamp = date("Y-m-d H:i:s T");
@@ -77,6 +81,23 @@ while(1) {
 		if($ircdata['command'] == "PING") {
 			echo "[$timestamp]  PONG ".$ircdata['messagetype']."";
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
+		}
+		
+		$nowepoch = time();
+		if($nowepoch > $nextnamescheck) {
+			fputs($socket, "NAMES ".$setting['c']."\n");
+			if($debugmode == true) { echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list."; }
+			$nextnamescheck = $nowepoch + 300;
+		}
+		
+		if($ircdata['messagetype'] == 353) {
+			$pieces = explode(" ", $ircdata['fullmessage']);
+			foreach($pieces as $names) {
+				if($names[0] == "+") {
+					$namenoflags = substr($names,1);
+					array_push($voicedusers,$namenoflags);
+				}
+			}
 		}
 		
 		//if(shouldBeVoiced($ircdata['usernickname'])
@@ -119,8 +140,8 @@ while(1) {
 					case "!grant":
 						voiceAction("grant",$ircdata['commandargs']);
 						break;
-					case "!sendraw":
-						fputs($socket, $ircdata['commandargs']);
+					case "!whohasvoice":
+						print_r($voicedusers);
 						break;
 				}
 		
@@ -153,6 +174,14 @@ while(1) {
 			// * END COMMAND PROCESSING * \\
 		}
     }
+}
+function updateVoicedUserList() {
+	global $socket;
+	global $setting;
+	global $timestamp;
+	global $debugmode;
+	
+	
 }
 function isUserVoiced($nick) {
 	
