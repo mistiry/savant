@@ -79,7 +79,7 @@ while(1) {
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
-		if(shouldBeVoiced($ircdata['usernickname'])
+		//if(shouldBeVoiced($ircdata['usernickname'])
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
