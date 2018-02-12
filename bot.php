@@ -115,7 +115,7 @@ while(1) {
 						getNominations();
 						break;
 					case "!grant":
-						voiceAction($type,$id);
+						voiceAction("grant",$ircdata['commandargs']);
 						break;
 				}
 			//Regular channel commands
