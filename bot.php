@@ -207,14 +207,16 @@ function createShouldBeVoicedArray() {
 		while($sqlstmt->fetch()) {
 			if($hasvoice == 1) {
 				array_push($shouldhavevoice,$resultnick);
+				print_r($shouldhavevoice);
+				return $shouldhavevoice;
 			} else {
-				echo "[$timestamp]  No users are flagged as shouldhavevoice.\n";
+				echo "[$timestamp]  Not adding $resultnick to array.\n";
 			}
 		}
 	} else {
 		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
 	}
-	return;
+	return $shouldhavevoice;
 }
 function isUserVoiced($nick) {
 	global $voicedusers;
