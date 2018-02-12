@@ -103,11 +103,6 @@ while(1) {
 				}
 			}
 			$shouldhavevoice = createShouldBeVoicedArray();
-			foreach($shouldhavevoice as $voiceuser) {
-				if(!in_array($voiceuser,$voicedusers)) {
-					plusV($ircdata['usernickname']);
-				}
-			}
 		}
 		
 		if(in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == false) { 
