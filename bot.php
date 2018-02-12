@@ -93,14 +93,6 @@ while(1) {
 			//OpChannel Commands
 			if($ircdata['location'] == $setting['o']) {
 				switch($firstword) {
-					case ".join":
-					case "!join":
-						if($ircdata['commandargs'][0] !== "#") {
-							sendPRIVMSG($ircdata['location'], "That doesn't look like a channel name.");
-						} else {
-							fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
-						}
-						break;
 					case "!nsregister":
 						if(isset($setting['i']) && isset($setting['e'])) {
 							sendPRIVMSG("NickServ", "register ".$setting['i']." ".$setting['e']."");
@@ -118,6 +110,9 @@ while(1) {
 						} else {
 							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
 						}
+						break;
+					case "!noms":
+						getNominations();
 						break;
 				}
 			//Regular channel commands
@@ -149,6 +144,24 @@ while(1) {
 			// * END COMMAND PROCESSING * \\
 		}
     }
+}
+function getNominations() {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT nominator,nominee,nominationtime,nominationreason FROM nominations WHERE status = "new"');
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($nominator,$nominee,$nominationtime,$nominationreason);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			sendPRIVMSG($setting['o'], "[$nominationtime] - $nominator nominates $nominee for voice, reason: $nominationreason");
+		}
+	} else {
+		sendPRIVMSG($setting['o'], "There are no new nominations.");
+	}
 }
 function nominateUser($nominee,$nominator,$nominationreason) {
 	global $socket;
