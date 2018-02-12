@@ -169,7 +169,7 @@ function voiceAction($type,$id) {
 				$nick = $pieces[0];
 				$hostmask = $pieces[1];				
 				$sqlstmt2 = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE nick=? AND hostmask=?');
-				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask;
+				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
 					sendPRIVMSG($setting['o'], "Granted voice to user with nomination id $id.");
