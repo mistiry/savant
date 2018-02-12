@@ -87,9 +87,10 @@ while(1) {
 		$nowepoch = time();
 		if($nowepoch > $nextnamescheck) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			createShouldBeVoicedArray();
+			$shouldhavevoice = createShouldBeVoicedArray();
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list.\n";
 			$nextnamescheck = $nowepoch + 60;
+
 		}
 		
 		if($ircdata['messagetype'] == "353") {
@@ -99,6 +100,12 @@ while(1) {
 				if($names[0] == "+") {
 					$namenoflags = substr($names,1);
 					array_push($voicedusers,$namenoflags);
+				}
+			}
+			$shouldhavevoice = createShouldBeVoicedArray();
+			foreach($shouldhavevoice as $voiceuser) {
+				if(!in_array($voiceuser,$voicedusers) {
+					plusV($ircdata['usernickname'];
 				}
 			}
 		}
@@ -156,7 +163,8 @@ while(1) {
 						print_r($voicedusers);
 						break;
 					case "!whoshould":
-						print_r($shouldbevoiced);
+						$whoshould = createShouldBeVoicedArray();
+						print_r($whoshould);
 						break;
 				}
 		
