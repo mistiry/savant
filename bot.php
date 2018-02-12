@@ -175,8 +175,8 @@ function voiceAction($type,$id) {
 				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
-					sendPRIVMSG($setting['o'], "Granted voice to user with nomination id $id.");
-					$sqlstmt3 = $mysqlconn->prepare('UPDATE nominations SET status = "granted" WHERE id =?');
+					sendPRIVMSG($setting['o'], "Granted 30-day voice to user with nomination id of $id.");
+					$sqlstmt3 = $mysqlconn->prepare('UPDATE nominations SET status="granted" WHERE id=?');
 					$sqlstmt3->bind_param($id);
 					$sqlstmt3->execute();
 					if($mysqlconn->affected_rows > 0) {
@@ -205,7 +205,7 @@ function getNominations() {
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
-			sendPRIVMSG($setting['o'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtome)");
+			sendPRIVMSG($setting['o'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
 		}
 	} else {
 		sendPRIVMSG($setting['o'], "There are no new nominations.");
