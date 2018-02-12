@@ -67,8 +67,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 );
 
 $epoch = time();
-$nextnamescheck = $epoch + 300;
-$voicedusers = array();
+$nextnamescheck = $epoch + 180;
 
 while(1) {
     while($data = fgets($socket)) {
@@ -86,11 +85,12 @@ while(1) {
 		$nowepoch = time();
 		if($nowepoch > $nextnamescheck) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			if($debugmode == true) { echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list."; }
-			$nextnamescheck = $nowepoch + 300;
+			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list.";
+			$nextnamescheck = $nowepoch + 180;
 		}
 		
-		if($ircdata['messagetype'] == 353) {
+		if($ircdata['messagetype'] == "353") {
+			$voiceduers = array();
 			$pieces = explode(" ", $ircdata['fullmessage']);
 			foreach($pieces as $names) {
 				if($names[0] == "+") {
@@ -175,16 +175,13 @@ while(1) {
 		}
     }
 }
-function updateVoicedUserList() {
-	global $socket;
-	global $setting;
-	global $timestamp;
-	global $debugmode;
-	
-	
-}
 function isUserVoiced($nick) {
-	
+	global $voicedusers;
+	if(in_array($nick,$voicedusers)) {
+		return true;
+	} else {
+		return false;
+	}
 }
 function shouldBeVoiced($nick) {
 	
@@ -324,7 +321,7 @@ function logSeenData($nick,$hostmask,$message,$channel) {
 	$sqlstmt->bind_param('ssssssss',$nick,$hostmask,$timestamp,$channel,$lastmessage,$timestamp,$lastmessage,$channel);
 	$sqlstmt->execute();
 	if($mysqlconn->affected_rows > 0) {
-		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
+		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage\n"; }
 		return;
 	} else {
 		if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@$hostmask lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn).""; }
