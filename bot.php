@@ -79,6 +79,8 @@ while(1) {
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
+		if(shouldBeVoiced($ircdata['usernickname'])
+		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
@@ -117,7 +119,11 @@ while(1) {
 					case "!grant":
 						voiceAction("grant",$ircdata['commandargs']);
 						break;
+					case "!sendraw":
+						fputs($socket, $ircdata['commandargs']);
+						break;
 				}
+		
 			//Regular channel commands
 			} else {
 				switch ($firstword) {
@@ -147,6 +153,12 @@ while(1) {
 			// * END COMMAND PROCESSING * \\
 		}
     }
+}
+function isUserVoiced($nick) {
+	
+}
+function shouldBeVoiced($nick) {
+	
 }
 function voiceAction($type,$id) {
 	global $timestamp;
@@ -181,6 +193,7 @@ function voiceAction($type,$id) {
 					$sqlstmt3->execute();
 					if($mysqlconn->affected_rows > 0) {
 						sendPRIVMSG($setting['o'], "Successfully marked nomination as granted.");
+						plusV($nick);
 					} else {
 						sendPRIVMSG($setting['o'], "Something Happened - unable to mark the nomination as granted.");
 					}
@@ -191,6 +204,18 @@ function voiceAction($type,$id) {
 		}
 	}
 	return;
+}
+function plusV($nick) {
+	global $timestamp;
+	global $setting;
+	global $socket;
+	fputs($socket, "MODE ".$setting['c']." +v $nick\n");
+}
+function minusV($nick) {
+	global $timestamp;
+	global $setting;
+	global $socket;
+	fputs($socket, "MODE ".$setting['c']." -v $nick\n");
 }
 function getNominations() {
 	global $timestamp;
