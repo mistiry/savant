@@ -197,7 +197,11 @@ function shouldBeVoiced($nick) {
 	$sqlstmt->bind_result($resultnick,$shouldhavevoice);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		return true;
+		if($shouldhavevoice == 1) {
+			return true;
+		} else {
+			return false;
+		}
 	} else {
 		return false;
 	}
