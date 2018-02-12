@@ -114,6 +114,9 @@ while(1) {
 					case "!noms":
 						getNominations();
 						break;
+					case "!grant":
+						voiceAction($type,$id);
+						break;
 				}
 			//Regular channel commands
 			} else {
@@ -145,23 +148,66 @@ while(1) {
 		}
     }
 }
-function getNominations() {
+function voiceAction($type,$id) {
 	global $timestamp;
 	global $mysqlconn;
 	global $setting;
 	
-	$sqlstmt = $mysqlconn->prepare('SELECT nominator,nominee,nominationtime,nominationreason FROM nominations WHERE status = "new"');
+	if($type == "grant") {
+		$now = time();
+		$newexpiredate = $now + 2592000; //Add 30 days in seconds to current epoch time
+		
+		$sqlstmt = $mysqlconn->prepare('SELECT nominee FROM nominations WHERE id=?');
+		$sqlstmt->bind_param('i',$id);
+		$sqlstmt->execute();
+		$sqlstmt->store_result();
+		$sqlstmt->bind_result($nominee);
+		$sqlrow = $sqlstmt->num_rows;
+		if($sqlrows > 0) {
+			while($sqlstmt->fetch()) {
+				$pieces = explode("@",$nominee);
+				$nick = $pieces[0];
+				$hostmask = $pieces[1];				
+				$sqlstmt2 = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE nick=? AND hostmask=?');
+				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask;
+				$sqlstmt2->execute();
+				if($mysqlconn->affected_rows > 0) {
+					sendPRIVMSG($setting['o'], "Granted voice to user with nomination id $id.");
+					$sqlstmt3 = $mysqlconn->prepare('UPDATE nominations SET status = "granted" WHERE id =?');
+					$sqlstmt3->bind_param($id);
+					$sqlstmt3->execute();
+					if($mysqlconn->affected_rows > 0) {
+						sendPRIVMSG($setting['o'], "Successfully marked nomination as granted.");
+					} else {
+						sendPRIVMSG($setting['o'], "Something Happened - unable to mark the nomination as granted.");
+					}
+				} else {
+					sendPRIVMSG($setting['o'], "Something Happened - unable to grant voice.");
+				}
+			}
+		}
+	}
+	return;
+}
+function getNominations() {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT id,nominator,nominee,nominationtime,nominationreason FROM nominations WHERE status = "new"');
 	$sqlstmt->execute();
 	$sqlstmt->store_result();
-	$sqlstmt->bind_result($nominator,$nominee,$nominationtime,$nominationreason);
+	$sqlstmt->bind_result($id,$nominator,$nominee,$nominationtime,$nominationreason);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
-			sendPRIVMSG($setting['o'], "[$nominationtime] - $nominator nominates $nominee for voice, reason: $nominationreason");
+			sendPRIVMSG($setting['o'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtome)");
 		}
 	} else {
 		sendPRIVMSG($setting['o'], "There are no new nominations.");
 	}
+	return;
 }
 function nominateUser($nominee,$nominator,$nominationreason) {
 	global $socket;
