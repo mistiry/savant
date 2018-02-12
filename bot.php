@@ -155,6 +155,9 @@ while(1) {
 					case "!whohasvoice":
 						print_r($voicedusers);
 						break;
+					case "!whoshould":
+						print_r($shouldbevoiced);
+						break;
 				}
 		
 			//Regular channel commands
@@ -202,7 +205,7 @@ function createShouldBeVoicedArray() {
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
-			if($hasvoice == "1") {
+			if($hasvoice == 1) {
 				array_push($shouldhavevoice,$resultnick);
 			} else {
 				echo "[$timestamp]  No users are flagged as shouldhavevoice.\n";
