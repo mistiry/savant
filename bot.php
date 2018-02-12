@@ -69,6 +69,8 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 $epoch = time();
 $nextnamescheck = $epoch + 3;
 $voicedusers = array();
+$shouldbevoiced = array();
+createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
@@ -86,8 +88,9 @@ while(1) {
 		$nowepoch = time();
 		if($nowepoch > $nextnamescheck) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
+			createShouldBeVoicedArray();
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list.\n";
-			$nextnamescheck = $nowepoch + 180;
+			$nextnamescheck = $nowepoch + 60;
 		}
 		
 		if($ircdata['messagetype'] == "353") {
@@ -185,6 +188,29 @@ while(1) {
 		}
     }
 }
+function createShouldBeVoicedArray() {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+	global $debugmode;
+	global $shouldhavevoice;
+	$shouldhavevoice = array();
+	echo "[$timestamp]  Updating ShouldBeVoiced array from database.\n";
+	$sqlstmt = $mysqlconn->prepare('SELECT nick,shouldhavevoice FROM usertable');
+	$sqlstmt->execute();
+	$sqlstmt->bind_result($resultnick,$shouldhavevoice);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		if($shouldhavevoice == "1") {
+			array_push($shouldhavevoice,$resultnick);
+		} else {
+			echo "[$timestamp]  No users are flagged as shouldhavevoice.\n";
+		}
+	} else {
+		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
+	}
+	return;
+}
 function isUserVoiced($nick) {
 	global $voicedusers;
 	if(in_array($nick,$voicedusers)) {
@@ -194,22 +220,9 @@ function isUserVoiced($nick) {
 	}
 }
 function shouldBeVoiced($nick) {
-	global $timestamp;
-	global $mysqlconn;
-	global $setting;
-	global $debugmode;
-	
-	$sqlstmt = $mysqlconn->prepare('SELECT nick, shouldhavevoice FROM usertable WHERE nick=?');
-	$sqlstmt->bind_param('s',$nick);
-	$sqlstmt->execute();
-	$sqlstmt->bind_result($resultnick,$shouldhavevoice);
-	$sqlrows = $sqlstmt->num_rows;
-	if($sqlrows > 0) {
-		if($shouldhavevoice == "1") {
-			return true;
-		} else {
-			return false;
-		}
+	global $shouldhavevoice;
+	if(in_array($nick,$shouldhavevoice)) {
+		return true;
 	} else {
 		return false;
 	}
