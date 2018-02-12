@@ -90,7 +90,7 @@ while(1) {
 		}
 		
 		if($ircdata['messagetype'] == "353") {
-			$voiceduers = array();
+			$voicedusers = array();
 			$pieces = explode(" ", $ircdata['fullmessage']);
 			foreach($pieces as $names) {
 				if($names[0] == "+") {
