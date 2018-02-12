@@ -67,10 +67,9 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 );
 
 $epoch = time();
-$nextnamescheck = $epoch + 3;
+$nextnamescheck = $epoch + 1;
 $voicedusers = array();
 $shouldhavevoice = array();
-createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
@@ -201,6 +200,7 @@ function createShouldBeVoicedArray() {
 	$sqlstmt->bind_result($resultnick,$hasvoice);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
+		while($sqlstme
 		if($hasvoice == "1") {
 			array_push($shouldhavevoice,$resultnick);
 		} else {
