@@ -197,14 +197,16 @@ function createShouldBeVoicedArray() {
 	echo "[$timestamp]  Updating ShouldBeVoiced array from database.\n";
 	$sqlstmt = $mysqlconn->prepare('SELECT nick,shouldhavevoice FROM usertable');
 	$sqlstmt->execute();
+	$sqlstmt->store_result();
 	$sqlstmt->bind_result($resultnick,$hasvoice);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		while($sqlstme
-		if($hasvoice == "1") {
-			array_push($shouldhavevoice,$resultnick);
-		} else {
-			echo "[$timestamp]  No users are flagged as shouldhavevoice.\n";
+		while($sqlstmt->fetch()) {
+			if($hasvoice == "1") {
+				array_push($shouldhavevoice,$resultnick);
+			} else {
+				echo "[$timestamp]  No users are flagged as shouldhavevoice.\n";
+			}
 		}
 	} else {
 		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
