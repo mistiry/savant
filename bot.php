@@ -4,8 +4,9 @@
 set_time_limit(0);
 error_reporting(E_ALL & ~E_NOTICE );
 date_default_timezone_set("America/Chicago");
+system("clear");
 
-echo "Starting savant...\n";
+echo "Starting bot...\n";
 
 //Bot Settings from command line options
 $settings = "s:";	//server to connect to
@@ -14,41 +15,49 @@ $settings.= "c:";	//channel to manage
 $settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
+$settings.= "e:";	//email, should only be used if you need to register with NickServ
+$settings.= "v:";	//verify code, should only be used to send the verify code to NickServ
+$settings.= "m:";	//mysql host to use
+$settings.= "u:";	//mysql user
+$settings.= "q:";	//mysql password
+$settings.= "b:";	//mysql database
 $settings.= "d:";	//debug mode
 $setting = getopt($settings);
 $errmsg = "";
-empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
 empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
-empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
+empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
 empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
+empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
+empty($setting['m']) ? $errmsg.= "No MySQL host provided!\n" : true ;
+empty($setting['u']) ? $errmsg.= "No MySQL user provided!\n" : true ;
+empty($setting['q']) ? $errmsg.= "No MySQL password provided!\n" : true ;
+empty($setting['b']) ? $errmsg.= "No MySQL database provided!\n" : true ;
 empty($setting['d']) ? $debugmode = false : $debugmode = true ;
 if($errmsg != "") {
-  die($errmsg);
+	die($errmsg);
 }
 
 if($debugmode == true) { echo "Debug mode is enabled.\n"; }
 
 //Connect to MySQL
-$mysqlhost = "localhost";
-$mysqluser = "savant";
-$mysqlpass = "S@v@nTB0t";
-$mysqldb = "savant";
-$mysqlconn = mysqli_connect($mysqlhost,$mysqluser,$mysqlpass, $mysqldb);
-if(!$mysqlconn) {
-  die("MySQL Connection failed: ". mysqli_connect_errno() . "". mysqli_connect_error() . "\n");
+$mysqlconn = new mysqli($setting['m'],$setting['u'],$setting['q'],$setting['b']);
+if($mysqlconn->connect_errno) {
+	die("MySQL Connection failed: ". $mysqlconn->connect_error ."\n");
 } else {
-  echo "MySQL Connection Succeeded.\n";
+	echo "MySQL Connection Succeeded.\n";
 }
+
 sleep(2);
 
 // Tread lightly.
 $socket = fsockopen($setting['s'], $setting['p']);
 fputs($socket,"USER ".$setting['n']." ".$setting['n']." ".$setting['n']." ".$setting['n']." :".$setting['n']."\n");
 fputs($socket,"NICK ".$setting['n']."\n");
-if($nspass != "") {
-  fputs($socket,"PRIVMSG NickServ :identify ".$setting['i']."\n");
+if(isset($setting['i']) && !isset($setting['e'])) {
+	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
+
 fputs($socket,"JOIN ".$setting['c']."\n");
 fputs($socket,"JOIN ".$setting['o']."\n");
 
@@ -75,7 +84,7 @@ while(1) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		} else {
 			//For each message, log it to the database for seen stats only for the regular channel
-			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage']); }
+			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); }
 							
 			// * COMMAND PROCESSING * \\
 			$messagearray = $ircdata['messagearray'];
@@ -92,7 +101,24 @@ while(1) {
 							fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
 						}
 						break;
-
+					case "!nsregister":
+						if(isset($setting['i']) && isset($setting['e'])) {
+							sendPRIVMSG("NickServ", "register ".$setting['i']." ".$setting['e']."");
+							sendPRIVMSG($ircdata['location'], "Register sent...please restart me without the -e parameter.");
+							//die("We just registered with NickServ, need to be restarted with the -e parameter, and include the -v parameter.");
+						} else {
+							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
+						}
+						break;
+					case "!nsverify":
+						if(isset($setting['v'])) {
+							sendPRIVMSG("NickServ", "VERIFY REGISTER ".$setting['n']." ".$setting['v']."");
+							sendPRIVMSG($ircdata['location'], "Register verify sent. Please restart me without -e or -v.");
+							//die("We just registered with NickServ, need to be restarted with the -e  or -v parameters.");
+						} else {
+							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
+						}
+						break;
 				}
 			//Regular channel commands
 			} else {
@@ -130,21 +156,31 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 	global $debugmode;
 	global $mysqlconn;
 	global $setting;
-	$sql = "SELECT * FROM usertable WHERE nick='$nominee' LIMIT 1";
-	$result = mysqli_query($mysqlconn,$sql);
-	if(mysqli_num_rows($result) > 0) {
-		while($row = mysqli_fetch_assoc($result)) {
-			$nomineefull = "".$nominee."@".$row['hostmask']."";
-			$sqlcheck = "SELECT * FROM nominations WHERE nominee='$nomineefull'";
-			$resultcheck = mysqli_query($mysqlconn,$sqlcheck);
-			if(mysqli_num_rows($resultcheck) < 1) {
-				$sql2 = "INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES('$nominator','$nomineefull','$timestamp','$nominationreason','new')";	
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT hostmask FROM usertable WHERE nick = ?');
+	$sqlstmt->bind_param('s', $nominee);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($hostmask);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows == 1) {
+		while($sqlstmt->fetch()) {
+			$nomineefull = "".$nominee."@".$hostmask."";
+			$sqlstmt2 = $mysqlconn->prepare("SELECT * FROM nominations WHERE nominee = ?");
+			$sqlstmt2->bind_param('s', $nomineefull);
+			$sqlstmt2->execute();
+			$sqlstmt2->store_result();
+			$sqlrows2 = $sqlstmt2->num_rows;
+			if($sqlrows2 == 0) {
+				$sqlstmt3 = $mysqlconn->prepare("INSERT INTO nominations(nominator,nominee,nominationtime,nominationreason,status) VALUES(?,?,?,?,'new')");
+				$sqlstmt3->bind_param('ssss', $nominator,$nomineefull,$timestamp,$nominationreason);
+				$sqlstmt3->execute();
 			} else {
 				$return = "Thank you for nominating, however, the nominee '$nomineefull' has already been nominated.";
 				return $return;
 			}
 		}
-		if(mysqli_query($mysqlconn,$sql2)) {
+		if($mysqlconn->affected_rows > 0) {
 			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
 			$return = "Thank you for your nomination! It has been added to the queue.";
 			sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
@@ -163,19 +199,21 @@ function sendPRIVMSG($location,$message) {
 	fputs($socket, "PRIVMSG ".$location." :".$message."\n");
 	return;
 }
-function logSeenData($nick,$hostmask,$message) {
-		global $mysqlconn;
-		global $timestamp;
-		global $debugmode;
-		$lastmessage = mysql_escape_string($message);
-		$sql = "INSERT INTO usertable(nick,hostmask,lastseen,lastmessage) VALUES('$nick','$hostmask','$timestamp','$lastmessage') ON DUPLICATE KEY UPDATE lastseen='$timestamp', lastmessage='$lastmessage'";
-		if(mysqli_query($mysqlconn,$sql)) {
-			if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
-			return;
-		} else {
-			if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@hostname lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn).""; }
-			return;
-		}
+function logSeenData($nick,$hostmask,$message,$channel) {
+	global $mysqlconn;
+	global $timestamp;
+	global $debugmode;
+	$lastmessage = mysql_escape_string($message);
+	$sqlstmt = $mysqlconn->prepare("INSERT INTO usertable(nick,hostmask,lastseen,lastseenchannel,lastmessage) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE lastseen=?, lastmessage=?, lastseenchannel=?");
+	$sqlstmt->bind_param('ssssssss',$nick,$hostmask,$timestamp,$channel,$lastmessage,$timestamp,$lastmessage,$channel);
+	$sqlstmt->execute();
+	if($mysqlconn->affected_rows > 0) {
+		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
+		return;
+	} else {
+		if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@$hostmask lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn).""; }
+		return;
+	}
 }
 function getSeenData($requester,$location,$usertoquery) {
 	global $mysqlconn;
@@ -185,11 +223,16 @@ function getSeenData($requester,$location,$usertoquery) {
 	if($usertoquery == $setting['n']) { $return = "I am right here..."; return $return; }
 	if($usertoquery == $requester) { $return = "Having an out of body experience? Need a mirror?"; return $return; }
 	if($usertoquery == "") { $return = "You need to specify a user to look up. Try again."; return $return; }
-	$sql = "SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick='$usertoquery' LIMIT 1";
-	$result = mysqli_query($mysqlconn,$sql);
-	if(mysqli_num_rows($result) > 0) {
-		while($row = mysqli_fetch_assoc($result)) {
-			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$row['hostmask']."' on ".$row['lastseen']." saying: '".$row['lastmessage']."'";
+	
+	$sqlstmt = $mysqlconn->prepare("SELECT nick,hostmask,lastseen,lastmessage FROM usertable WHERE nick=? AND lastseenchannel=?");
+	$sqlstmt->bind_param('ss',$usertoquery,$location);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($nick,$hostmask,$lastseen,$lastmessage);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			$return = "$requester - The user '$usertoquery' was last seen using hostmask '".$hostmask."' on ".$lastseen." saying: '".$lastmessage."'";
 		}
 	} else {
 		$return = "$requester - I was unable to locate seen data for '$usertoquery'.";
@@ -216,8 +259,8 @@ function processIRCdata($data) {
 	$return = array(
 		'messagearray'	=>	$messagearray,
 		'messagetype'	=>	$messagetype,
-		'command'		=>	$command,
-		'location'		=>	$location,
+		'command'       =>  $command,
+		'location'      =>  $location,
 		'userhostname'	=>	$userhostname,
 		'usernickname'	=>	$usernickname,
 		'commandargs'	=>	$commandargs,
