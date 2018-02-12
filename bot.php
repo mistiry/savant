@@ -215,14 +215,12 @@ function createShouldBeVoicedArray() {
 		while($sqlstmt->fetch()) {
 			if($hasvoice == 1) {
 				array_push($shouldhavevoice,$resultnick);
-				print_r($shouldhavevoice);
-			} else {
-				echo "[$timestamp]  Not adding $resultnick to array.\n";
 			}
 		}
 	} else {
 		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
 	}
+	print_r($shouldhavevoice);
 	return $shouldhavevoice;
 }
 function isUserVoiced($nick) {
