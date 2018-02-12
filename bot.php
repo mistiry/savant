@@ -100,8 +100,8 @@ while(1) {
 			}
 		}
 		
-		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { plusV($ircdata['usernickname']; }
-		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { minusV($ircdata['usernickname']; }
+		if(shouldBeVoiced($ircdata['usernickname']) == true && isUserVoiced($ircdata['usernickname']) == false) { plusV($ircdata['usernickname']); }
+		if(shouldBeVoiced($ircdata['usernickname']) == false && isUserVoiced($ircdata['usernickname']) == true) { minusV($ircdata['usernickname']); }
 		
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
