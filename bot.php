@@ -165,7 +165,7 @@ function voiceAction($type,$id) {
 		$sqlstmt->execute();
 		$sqlstmt->store_result();
 		$sqlstmt->bind_result($nominee);
-		$sqlrow = $sqlstmt->num_rows;
+		$sqlrows = $sqlstmt->num_rows;
 		if($sqlrows > 0) {
 			while($sqlstmt->fetch()) {
 				$pieces = explode("@",$nominee);
