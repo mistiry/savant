@@ -234,7 +234,7 @@ function createVoicedUsersArray() {
 		if($names[0] == "+") {
 			$namenoflags = substr($names,1);
 			echo "[$timestamp]  User $namenoflags is voiced, adding to voicedusers array\n";
-			if(!in_array($namenoflags,$voicedusers) {
+			if(!in_array($namenoflags,$voicedusers)) {
 				array_push($voicedusers,$namenoflags);
 			}
 		}
