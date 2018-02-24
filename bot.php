@@ -96,7 +96,7 @@ while(1) {
 			
 			//check all users with voice, remove those that dont have it, grant if they should but dont
 			foreach($voiceduser as $usertocheck) {
-				if(!in_array($usertocheck,$shouldBeVoiced) {
+				if(!in_array($usertocheck,$shouldBeVoiced)) {
 					echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
 					minusV($usertocheck);
 				} else {
