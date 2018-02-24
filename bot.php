@@ -64,7 +64,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 );
 
 $epoch = time();
-$nextnamescheck = $epoch + 120;
+$nextnamescheck = $epoch + 10;
 $voicedusers = array();
 $alluserslist = array();
 //$shouldhavevoice = createShouldBeVoicedArray();
@@ -299,6 +299,7 @@ function shouldBeVoiced($nick) {
 }
 function isUserAdmin($nick) {
 	global $mysqlconn;
+	global $timestamp;
 	
 	$sqlstmt = $mysqlconn->prepare('SELECT isadmin FROM usertable WHERE nick=?');
 	$sqlstmt->bind_param('s', $nick);
@@ -308,12 +309,14 @@ function isUserAdmin($nick) {
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		if($isadmin == 1) {
+			echo "[$timestamp]  Granted user $nick admin rights as database flag isadmin = 1\n";
 			return true;
+			
 		} else {
+			echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = NULL\n";
 			return false;
 		}
 	}
-	return;
 }
 function isUserIgnored($nick) {
 	global $mysqlconn;
@@ -331,7 +334,6 @@ function isUserIgnored($nick) {
 			return false;
 		}
 	}
-	return;
 }
 function voiceAction($type,$id) {
 	global $timestamp;
