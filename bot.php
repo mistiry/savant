@@ -225,7 +225,7 @@ function createVoicedUsersArray() {
 	global $timestamp;
 	global $setting;
 	global $ircdata;
-	//global $voicedusers;
+	global $voicedusers;
 
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
