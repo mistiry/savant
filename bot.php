@@ -88,7 +88,7 @@ while(1) {
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
-			$alluserslist = createAllUsersList();
+			createAllUsersList();
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -97,6 +97,14 @@ while(1) {
 		if($nowepoch > $nextnamescheck) {
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
 			$shouldhavevoice = createShouldBeVoicedArray();
+			
+			//Now check all users and if they're supposed to be voiced, voice them
+			foreach($alluserslist as $usertocheck) {
+				if(shouldBeVoiced($usertocheck) == true) {
+					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
+					plusV($usertocheck);
+				}
+			}
 			
 			//check all the voiced users in case their granted time has expired
 			foreach($voicedusers as $usertocheck) {
