@@ -89,6 +89,8 @@ while(1) {
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
+			$arraycount = count($alluserslist);
+			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -242,9 +244,9 @@ function createAllUsersList() {
 	
 	foreach($pieces as $names) {
 		$name = substr($names,1);
-		array_push($alluserslist,$name);
-		$arraycount = count($alluserslist);
-		echo "[$timestamp]  Built alluserslist with $arraycount names\n";
+		if(!in_array($name,$alluserslist)) {
+			array_push($alluserslist,$name);
+		}
 	}
 	return true;
 }
