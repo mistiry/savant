@@ -252,7 +252,7 @@ function createAllUsersList() {
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
 	foreach($pieces as $names) {
-		if($names[0] == "+" || $names[0] == "@") {
+		if( ($names[0] == "+") || ($names[0] == "@") ) {
 			$name = substr($names,1);
 		else {
 			$name = $names;
