@@ -225,14 +225,14 @@ function createVoicedUsersArray() {
 	global $timestamp;
 	global $setting;
 	global $ircdata;
-	
-	$voicedusers = array();
+	global $voicedusers;	
+
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
 	foreach($pieces as $names) {
 		if($names[0] == "+") {
-			echo "[$timestamp]  User $names is voiced, adding to voicedusers array\n";
 			$namenoflags = substr($names,1);
+			echo "[$timestamp]  User $namenoflags is voiced, adding to voicedusers array\n";
 			array_push($voicedusers,$namenoflags);
 		}
 	}
