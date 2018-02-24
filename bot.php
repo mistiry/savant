@@ -103,7 +103,7 @@ while(1) {
 			
 			//Now check all users and if they're supposed to be voiced, voice them
 			foreach($alluserslist as $usertocheck) {
-				if(shouldBeVoiced($usertocheck) == true) {
+				if(shouldBeVoiced($usertocheck) == true && isUserVoiced($usertocheck) == false) {
 					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
 					plusV($usertocheck);
 				}
@@ -252,7 +252,11 @@ function createAllUsersList() {
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
 	foreach($pieces as $names) {
-		$name = substr($names,1);
+		if($names[0] == "+" || $names[0] == "@") {
+			$name = substr($names,1);
+		else {
+			$name = $names;
+		}
 		if(!in_array($name,$alluserslist)) {
 			array_push($alluserslist,$name);
 		}
