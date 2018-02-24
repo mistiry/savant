@@ -89,8 +89,9 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
-			$voicedusers = createVoicedUsersArray();
 			if($ircdata['location'] == $setting['c']) {
+				$voicedusers = createVoicedUsersArray();
+				$alluserslist = array();
 				createAllUsersList();
 				$arraycount = count($alluserslist);
 				echo "[$timestamp]  Built alluserslist with $arraycount names\n";
