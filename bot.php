@@ -308,7 +308,7 @@ function isUserAdmin($nick) {
 	if($sqlrows > 0) {
 		if($isadmin == true) {
 			return true;
-		else {
+		} else {
 			return false;
 		}
 	}
