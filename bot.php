@@ -101,7 +101,7 @@ while(1) {
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
 			$shouldhavevoice = createShouldBeVoicedArray();
 			
-			//Now check all users and if they're supposed to be voiced, voice them
+			//check all users and if they're supposed to be voiced, voice them
 			foreach($alluserslist as $usertocheck) {
 				if(shouldBeVoiced($usertocheck) == true && isUserVoiced($usertocheck) == false) {
 					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
@@ -128,16 +128,6 @@ while(1) {
 				}
 			}
 
-			//Now check all users and if they're supposed to be voiced, voice them
-			$usertocheck = "";
-			$shouldhavevoice = createShouldBeVoicedArray();
-			foreach($alluserslist as $usertocheck) {
-				if(shouldBeVoiced($usertocheck) == true) {
-					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
-					plusV($usertocheck);
-				}
-			}
-			
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
