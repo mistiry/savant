@@ -58,6 +58,7 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
 
+sleep(3);
 fputs($socket,"JOIN ".$setting['c']."\n");
 fputs($socket,"JOIN ".$setting['o']."\n");
 
@@ -88,10 +89,12 @@ while(1) {
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
-			$alluserslist = array();
-			createAllUsersList();
-			$arraycount = count($alluserslist);
-			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
+			if($ircdata['location'] == $setting['c']) {
+				$alluserslist = array();
+				createAllUsersList();
+				$arraycount = count($alluserslist);
+				echo "[$timestamp]  Built alluserslist with $arraycount names\n";
+			}
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
