@@ -84,6 +84,7 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
+			$voicedusers = array();
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
 			$arraycount = count($alluserslist);
@@ -233,7 +234,9 @@ function createVoicedUsersArray() {
 		if($names[0] == "+") {
 			$namenoflags = substr($names,1);
 			echo "[$timestamp]  User $namenoflags is voiced, adding to voicedusers array\n";
-			array_push($voicedusers,$namenoflags);
+			if(!in_array($namenoflags,$voicedusers) {
+				array_push($voicedusers,$namenoflags);
+			}
 		}
 	}
 	return $voicedusers;
