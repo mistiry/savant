@@ -89,6 +89,8 @@ while(1) {
 			$voicedusers = createVoicedUsersArray();
 		}
 		
+		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
+		//voicing users that should have it, and adding 60 seconds to the timer
 		$nowepoch = time();
 		if($nowepoch > $nextnamescheck) {
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
@@ -100,14 +102,16 @@ while(1) {
 				if(!in_array($usertocheck,$shouldhavevoice)) {
 					echo "[$timestamp]  User ".$usertocheck." shouldn't be voiced and is, I will remove it.\n";
 					minusV($usertocheck);
-				} elseif($isUserVoiced($usertocheck) == false) {
+				} elseif(isUserVoiced($usertocheck) == false) {
 					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
 					plusV($usertocheck);
 				} else {
 					true;
 				}
-				
-				//Now, lets check if their voice has expired so it can be revoked...
+			}
+			
+			//Next, we check all the voiced users in case their granted time has expired
+			foreach($voicedusers as $usertocheck) {
 				checkUserVoiceExpired($usertocheck);
 			}
 			
@@ -116,6 +120,9 @@ while(1) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
 			$nextnamescheck = $nowepoch + 60;
 		}
+		
+		
+
 
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
