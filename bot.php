@@ -12,7 +12,6 @@ echo "Starting bot...\n";
 $settings = "s:";	//server to connect to
 $settings.= "p:";	//port to use
 $settings.= "c:";	//channel to manage
-$settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
 $settings.= "e:";	//email, should only be used if you need to register with NickServ
@@ -27,7 +26,6 @@ $errmsg = "";
 empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
-empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['m']) ? $errmsg.= "No MySQL host provided!\n" : true ;
 empty($setting['u']) ? $errmsg.= "No MySQL user provided!\n" : true ;
@@ -59,12 +57,17 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 }
 
 fputs($socket,"JOIN ".$setting['c']."\n");
-fputs($socket,"JOIN ".$setting['o']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
 $ignore = array('001','002','003','004','005','250','251','252','253',
-                '254','255','265','266','372','375','376','353','366',
+                '254','255','265','266','353','372','375','376','366',
 );
+
+$epoch = time();
+$nextnamescheck = $epoch + 10;
+$voicedusers = array();
+$alluserslist = array();
+//$shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
@@ -79,28 +82,68 @@ while(1) {
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
-		//Ignore PMs, otherwise process each message to determine if we have an action
+		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
+		if($ircdata['messagetype'] == "353") {
+			$voicedusers = createVoicedUsersArray();
+			createAllUsersList();
+			$arraycount = count($alluserslist);
+			//echo "[$timestamp]  Built alluserslist with $arraycount names\n";
+		}
+		
+		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
+		//voicing users that should have it, and adding 60 seconds to the timer
+		$nowepoch = time();
+		if($nowepoch > $nextnamescheck) {
+			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
+			$shouldhavevoice = createShouldBeVoicedArray();
+			
+			//check all users and if they're supposed to be voiced, voice them
+			foreach($alluserslist as $usertocheck) {
+				if(shouldBeVoiced($usertocheck) == true && isUserVoiced($usertocheck) == false) {
+					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
+					plusV($usertocheck);
+				}
+			}
+			
+			//check all the voiced users in case their granted time has expired
+			foreach($voicedusers as $usertocheck) {
+				checkUserVoiceExpired($usertocheck);
+			}
+			
+			//check all users with voice, remove those that dont have it, grant if they should but dont
+			echo "[$timestamp]  Checking that all voices set properly.\n";
+			foreach($voicedusers as $usertocheck) {
+				echo "[$timestamp]  Checking if voiced user $usertocheck should be voiced.\n";
+				if(!in_array($usertocheck,$shouldhavevoice)) {
+					echo "[$timestamp]  User ".$usertocheck." shouldn't be voiced and is, I will remove it.\n";
+					minusV($usertocheck);
+				} elseif(isUserVoiced($usertocheck) == false) {
+					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
+					plusV($usertocheck);
+				} else {
+					true;
+				}
+			}
+			$voicedusers = array();
+			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
+			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
+			fputs($socket, "NAMES ".$setting['c']."\n");
+			$nextnamescheck = $nowepoch + 60;
+		}
+
+		//For each message, log it to the database for seen stats only for the regular channel
+		if($ircdata['location'] == $setting['c']) {	
+			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); 
+		}
+		
+		//
+		
+		//Accept PMs from admins, otherwise ignore; then continue processing messages to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
-			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
-		} else {
-			//For each message, log it to the database for seen stats only for the regular channel
-			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); }
-							
-			// * COMMAND PROCESSING * \\
 			$messagearray = $ircdata['messagearray'];
 			$firstword = trim($messagearray[1]);
-			
-			//OpChannel Commands
-			if($ircdata['location'] == $setting['o']) {
+			if(isUserAdmin($ircdata['usernickname']) == true) {
 				switch($firstword) {
-					case ".join":
-					case "!join":
-						if($ircdata['commandargs'][0] !== "#") {
-							sendPRIVMSG($ircdata['location'], "That doesn't look like a channel name.");
-						} else {
-							fputs($socket, "JOIN ".$ircdata['commandargs']."\n");
-						}
-						break;
 					case "!nsregister":
 						if(isset($setting['i']) && isset($setting['e'])) {
 							sendPRIVMSG("NickServ", "register ".$setting['i']." ".$setting['e']."");
@@ -119,36 +162,325 @@ while(1) {
 							sendPRIVMSG($ircdata['location'], "Proper command-line arguments not parsed.");
 						}
 						break;
-				}
-			//Regular channel commands
-			} else {
-				switch ($firstword) {
-					case ".say":
-					case "!say":
-						$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
-						echo "[$timestamp]  $asdf";
-						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
+					case "!noms":
+						getNominations();
 						break;
-					case ".seen":
+					case "!grant":
+						voiceAction("grant",$ircdata['commandargs']);
+						break;
+					case "!deny":
+						voiceAction("deny",$ircdata['commandargs']);
+						break;
+					case "!whohasvoice":
+						print_r($voicedusers);
+						break;
+					case "!updatearrays":
+						$shouldhavevoice = createShouldBeVoicedArray();
+						fputs($socket, "NAMES ".$setting['c']."\n");
+						break;
+					case "!printarrays":
+						echo "shouldhavevoice\n";
+						print_r($shouldhavevoice);
+						echo "voicedusers\n";
+						print_r($voicedusers);
+						//echo "allusers\n";
+						//print_r($alluserslist);
+						break;
+				}						
+			} else {
+				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
+			}
+		} elseif($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['c']) {
+			$messagearray = $ircdata['messagearray'];
+			$firstword = trim($messagearray[1]);
+			if($firstword[0] == "!") {
+				echo "[$timestamp]  Seen command $firstword in channel ".$ircdata['location']."\n";
+			}
+			if(isUserIgnored($ircdata['usernickname']) == false) {
+				switch($firstword) {
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
 						break;
-					case ".nominate":
+					case "!help":
+						sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
+						break;
 					case "!nominate":
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
-						$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
-						if($nominee == $ircdata['usernickname']) { 
-							sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+						if(!in_array($nominee,$alluserslist)) {
+							sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
 						} else {
-							sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
+							if($nominee == $ircdata['usernickname']) { 
+								sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+							} else {
+								sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							}
 						}
 						break;
-				  }
+				}
 			}
-			// * END COMMAND PROCESSING * \\
 		}
-    }
+		// * END COMMAND PROCESSING * \\
+	}
+}
+function createVoicedUsersArray() {
+	global $timestamp;
+	global $setting;
+	global $ircdata;
+	global $voicedusers;
+
+	$pieces = explode(" ", $ircdata['fullmessage']);
+	
+	foreach($pieces as $names) {
+		if($names[0] == "+") {
+			$namenoflags = substr($names,1);
+			echo "[$timestamp]  User $namenoflags is voiced, adding to voicedusers array\n";
+			if(!in_array($namenoflags,$voicedusers)) {
+				array_push($voicedusers,$namenoflags);
+			}
+		}
+	}
+	return $voicedusers;
+}
+function createAllUsersList() {
+	global $timestamp;
+	global $setting;
+	global $ircdata;
+	global $alluserslist;
+	
+	$pieces = explode(" ", $ircdata['fullmessage']);
+	
+	foreach($pieces as $names) {
+		if($names[0] == ":") {
+			$names = substr($names,1);
+		}
+		if( ($names[0] == "+") || ($names[0] == "@") ) {
+			$name = substr($names,1);
+		} else {
+			$name = $names;
+		}
+		if(!in_array($name,$alluserslist)) {
+			array_push($alluserslist,$name);
+		}
+	}
+	return true;
+}
+function createShouldBeVoicedArray() {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+	global $debugmode;
+	global $shouldhavevoice;
+	$shouldhavevoice = array();
+	echo "[$timestamp]  Updating ShouldBeVoiced array from database.\n";
+	$sqlstmt = $mysqlconn->prepare('SELECT nick,shouldhavevoice FROM usertable');
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($resultnick,$hasvoice);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			if($hasvoice == 1) {
+				array_push($shouldhavevoice,$resultnick);
+			}
+		}
+	} else {
+		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
+	}
+	($debugmode == true) ? print_r($shouldhavevoice) : true ;
+	return $shouldhavevoice;
+}
+function isUserVoiced($nick) {
+	global $voicedusers;
+	if(in_array($nick,$voicedusers)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+function shouldBeVoiced($nick) {
+	global $shouldhavevoice;
+	if(in_array($nick,$shouldhavevoice)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+function isUserAdmin($nick) {
+	global $mysqlconn;
+	global $timestamp;
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT isadmin FROM usertable WHERE nick=?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($isadmin);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			if($isadmin == "1") {
+				echo "[$timestamp]  Granted user $nick admin rights as database flag isadmin = 1\n";
+				return true;
+				
+			} else {
+				echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = '$isadmin'\n";
+				return false;
+			}
+		}
+	}
+}
+function isUserIgnored($nick) {
+	global $mysqlconn;
+	global $ircdata;
+	global $timestamp;
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT isignored FROM usertable WHERE nick=?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($isignored);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			if($isignored == "1") {
+				//echo "[$timestamp]  User '".$ircdata['location']."' ignored, database value isignored = '$isignored'\n";
+				return true;
+			} else {
+				//echo "[$timestamp]  User '".$ircdata['location']."' command allowed, database value isignored = '$isignored'\n";
+				return false;
+			}
+		}
+	}
+}
+function voiceAction($type,$id) {
+	global $timestamp;
+	global $mysqlconn;
+	global $setting;
+	global $debugmode;
+	global $ircdata;
+	global $socket;
+	
+	if($debugmode == true) { echo "[$timestamp]  Received a request to perform voice action $type for id $id\n"; }
+	
+	if($type == "grant") {
+		$now = time();
+		$newexpiredate = $now + 2592000; //Add 30 days in seconds to current epoch time
+		
+		$sqlstmt = $mysqlconn->prepare("SELECT nominee FROM nominations WHERE status='new' AND id=?");
+		$sqlstmt->bind_param('i',$id);
+		$sqlstmt->execute();
+		$sqlstmt->store_result();
+		$sqlstmt->bind_result($nominee);
+		$sqlrows = $sqlstmt->num_rows;
+		if($sqlrows > 0) {
+			while($sqlstmt->fetch()) {
+				$pieces = explode("@",$nominee);
+				$nick = $pieces[0];
+				$hostmask = $pieces[1];				
+				$sqlstmt2 = $mysqlconn->prepare("UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE status='new' AND nick=? AND hostmask=?");
+				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
+				$sqlstmt2->execute();
+				if($mysqlconn->affected_rows > 0) {
+					sendPRIVMSG($setting['c'], "Granted 30-day voice to '$nominee' with nomination id of $id.");
+					$sqlstmt3 = $mysqlconn->prepare("UPDATE nominations SET status='granted' WHERE status='new' AND id=?");
+					$sqlstmt3->bind_param('i',$id);
+					$sqlstmt3->execute();
+					if($mysqlconn->affected_rows > 0) {
+						//sendPRIVMSG($setting['o'], "Successfully marked nomination as granted.");
+						plusV($nick);
+					} else {
+						sendPRIVMSG($setting['c'], "Something Happened - unable to mark the nomination as granted.");
+					}
+				} else {
+					sendPRIVMSG($setting['c'], "Something Happened - unable to grant voice.");
+				}
+			}
+		}
+	}
+	if($type == "deny") {
+		$sqlstmt = $mysqlconn->prepare("UPDATE nominations SET status='denied' WHERE status='new' AND id=?");
+		$sqlstmt->bind_param('s',$id);
+		$sqlstmt->execute();
+		if($mysqlconn->affected_rows > 0) {
+			sendPRIVMSG($ircdata['usernickname'], "Denied voice for '$nominee' after time expired.");
+			minusV($id);
+		} else {
+			true;
+			sendPRIVMSG($ircdata['usernickname'], "Something Happened - unable to revoke voice for $nominee.");
+		}
+	}
+	if($type == "revoke") {
+		$sqlstmt = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=NULL, voiceexpiredate=NULL WHERE nick=?');
+		$sqlstmt->bind_param('s',$id);
+		$sqlstmt->execute();
+		if($mysqlconn->affected_rows > 0) {
+			sendPRIVMSG($setting['c'], "Revoked voice from user $id after time expired.");
+			minusV($id);
+		} else {
+			true;
+			//sendPRIVMSG($setting['o'], "Something Happened - unable to revoke voice for user $id.");
+		}
+	}
+	fputs($socket, "NAMES ".$setting['c']."\n");
+	return;
+}
+function plusV($nick) {
+	global $timestamp;
+	global $setting;
+	global $socket;
+	fputs($socket, "MODE ".$setting['c']." +v $nick\n");
+}
+function minusV($nick) {
+	global $timestamp;
+	global $setting;
+	global $socket;
+	fputs($socket, "MODE ".$setting['c']." -v $nick\n");
+}
+function checkUserVoiceExpired($nick) {
+	global $timestamp;
+	global $mysqlconn;
+	global $voicedusers;
+	$time = time();
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT shouldhavevoice,voiceexpiredate FROM usertable WHERE nick = ?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($shouldhavevoice,$voiceexpiredate);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows == 1) {
+		while($sqlstmt->fetch()) {
+			if( ($time > $voiceexpiredate) && ($shouldhavevoice == 1) )  {
+				voiceAction("revoke",$nick);
+				echo "[$timestamp]  User $nick grant expired, revoking voice now.\n";
+			} else {
+				echo "[$timestamp]  User $nick grant not yet expired or nonexistent.\n";
+			}
+		}
+		return true;
+	}
+	return false;
+}
+function getNominations() {
+	global $timestamp;
+	global $mysqlconn;
+	global $ircdata;
+
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT id,nominator,nominee,nominationtime,nominationreason FROM nominations WHERE status = "new"');
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($id,$nominator,$nominee,$nominationtime,$nominationreason);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		while($sqlstmt->fetch()) {
+			sendPRIVMSG($ircdata['usernickname'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
+		}
+	} else {
+		sendPRIVMSG($ircdata['usernickname'], "There are no new nominations.");
+	}
+	return;
 }
 function nominateUser($nominee,$nominator,$nominationreason) {
 	global $socket;
@@ -181,11 +513,11 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 			}
 		}
 		if($mysqlconn->affected_rows > 0) {
-			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason"; }
+			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason\n"; }
 			$return = "Thank you for your nomination! It has been added to the queue.";
-			sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
+			//sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
 		} else  {
-			if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn).""; }
+			if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn)."\n"; }
 			$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
 		}
 	} else {
@@ -208,10 +540,10 @@ function logSeenData($nick,$hostmask,$message,$channel) {
 	$sqlstmt->bind_param('ssssssss',$nick,$hostmask,$timestamp,$channel,$lastmessage,$timestamp,$lastmessage,$channel);
 	$sqlstmt->execute();
 	if($mysqlconn->affected_rows > 0) {
-		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage"; }
+		if($debugmode == true) { echo "[$timestamp]  Updated seen data: $nick@$hostmask lastseen $timestamp message $lastmessage\n"; }
 		return;
 	} else {
-		if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@$hostmask lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn).""; }
+		if($debugmode == true) { echo "[$timestamp]  Failed to update seen data: $nick@$hostmask lastseen $timestamp message $lastmessage - MySQL error ".mysqli_error($mysqlconn)."\n"; }
 		return;
 	}
 }
@@ -268,7 +600,7 @@ function processIRCdata($data) {
 	);
 	if($debugmode == true) { 
 		print_r($return); 
-		echo "RAWDATA - $data";
+		//echo "RAWDATA - $data\n";
 	}
 	return $return;
 }
