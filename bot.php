@@ -306,7 +306,11 @@ function isUserAdmin($nick) {
 	$sqlstmt->bind_result($isadmin);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		($isadmin == true) ? return true : return false ;
+		if($isadmin == true) {
+			return true;
+		else {
+			return false;
+		}
 	}
 	return;
 }
