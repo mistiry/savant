@@ -84,7 +84,6 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
-			$voicedusers = array();
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
 			$arraycount = count($alluserslist);
@@ -125,7 +124,7 @@ while(1) {
 					true;
 				}
 			}
-
+			$voicedusers = array();
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
@@ -226,7 +225,7 @@ function createVoicedUsersArray() {
 	global $timestamp;
 	global $setting;
 	global $ircdata;
-	global $voicedusers;	
+	//global $voicedusers;
 
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
