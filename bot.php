@@ -88,6 +88,7 @@ while(1) {
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
+			$alluserslist = array();
 			createAllUsersList();
 			$arraycount = count($alluserslist);
 			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
@@ -187,6 +188,14 @@ while(1) {
 					case "!updatearrays":
 						$shouldhavevoice = createShouldBeVoicedArray();
 						fputs($socket, "NAMES ".$setting['c']."\n");
+						break;
+					case "!printarrays":
+						echo "shouldhavevoice\n";
+						print_r($shouldhavevoice);
+						echo "voicedusers\n";
+						print_r($voicedusers);
+						echo "allusers\n";
+						print_r($alluserslist);
 						break;
 				}
 		
