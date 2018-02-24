@@ -188,32 +188,33 @@ while(1) {
 		} else {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		}	
-			// * COMMAND PROCESSING * \\
-			if(isUserIgnored($ircdata['usernickname'] == false)) {
-				switch($firstword) {
-					case "!seen":
-						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
-						break;
-					case "!help":
-						sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
-						break;
-					case "!nominate":
-						$nomineepieces = explode(" ",$ircdata['commandargs']);
-						$nominee = $nomineepieces[0];
-						if(!in_array($nominee,$alluserslist)) {
-							sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
+		
+		// * COMMAND PROCESSING * \\
+		if(isUserIgnored($ircdata['usernickname'] == false)) {
+			switch($firstword) {
+				case "!seen":
+					sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
+					break;
+				case "!help":
+					sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
+					break;
+				case "!nominate":
+					$nomineepieces = explode(" ",$ircdata['commandargs']);
+					$nominee = $nomineepieces[0];
+					if(!in_array($nominee,$alluserslist)) {
+						sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
+					} else {
+						$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
+						if($nominee == $ircdata['usernickname']) { 
+							sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
 						} else {
-							$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
-							if($nominee == $ircdata['usernickname']) { 
-								sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
-							} else {
-								sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
-							}
+							sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
 						}
-						break;
-				  }
-			}
-			// * END COMMAND PROCESSING * \\
+					}
+					break;
+			  }
+		}
+		// * END COMMAND PROCESSING * \\
 	}
 }
 function createVoicedUsersArray() {
@@ -306,7 +307,7 @@ function isUserAdmin($nick) {
 	$sqlstmt->bind_result($isadmin);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isadmin == true) {
+		if($isadmin == 1) {
 			return true;
 		} else {
 			return false;
@@ -324,7 +325,7 @@ function isUserIgnored($nick) {
 	$sqlstmt->bind_result($isignored);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isignored == true) {
+		if($isignored == 1) {
 			return true;
 		} else {
 			return false;
