@@ -383,7 +383,7 @@ function voiceAction($type,$id) {
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
 					sendPRIVMSG($setting['c'], "Granted 30-day voice to '$nominee' with nomination id of $id.");
-					$sqlstmt3 = $mysqlconn->prepare("UPDATE nominations SET status="granted" WHERE status='new' AND id=?");
+					$sqlstmt3 = $mysqlconn->prepare("UPDATE nominations SET status='granted' WHERE status='new' AND id=?");
 					$sqlstmt3->bind_param('i',$id);
 					$sqlstmt3->execute();
 					if($mysqlconn->affected_rows > 0) {
