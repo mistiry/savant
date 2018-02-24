@@ -113,6 +113,7 @@ while(1) {
 			//check all users with voice, remove those that dont have it, grant if they should but dont
 			echo "[$timestamp]  Checking that all voices set properly.\n";
 			foreach($voicedusers as $usertocheck) {
+				echo "[$timestamp]  Checking if voiced user $usertocheck should be voiced.\n";
 				if(!in_array($usertocheck,$shouldhavevoice)) {
 					echo "[$timestamp]  User ".$usertocheck." shouldn't be voiced and is, I will remove it.\n";
 					minusV($usertocheck);
@@ -127,7 +128,7 @@ while(1) {
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			$nextnamescheck = $nowepoch + 300;
+			$nextnamescheck = $nowepoch + 60;
 		}
 
 		//For each message, log it to the database for seen stats only for the regular channel
@@ -179,8 +180,8 @@ while(1) {
 						print_r($shouldhavevoice);
 						echo "voicedusers\n";
 						print_r($voicedusers);
-						echo "allusers\n";
-						print_r($alluserslist);
+						//echo "allusers\n";
+						//print_r($alluserslist);
 						break;
 				}						
 			} else {
