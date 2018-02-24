@@ -214,8 +214,7 @@ while(1) {
 				  }
 			}
 			// * END COMMAND PROCESSING * \\
-		}
-    }
+	}
 }
 function createVoicedUsersArray() {
 	global $timestamp;
