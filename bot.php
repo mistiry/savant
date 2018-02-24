@@ -308,13 +308,15 @@ function isUserAdmin($nick) {
 	$sqlstmt->bind_result($isadmin);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isadmin == "1") {
-			echo "[$timestamp]  Granted user $nick admin rights as database flag isadmin = 1\n";
-			return true;
-			
-		} else {
-			echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = '$isadmin'\n";
-			return false;
+		while($sqlstmt->fetch()) {
+			if($isadmin == "1") {
+				echo "[$timestamp]  Granted user $nick admin rights as database flag isadmin = 1\n";
+				return true;
+				
+			} else {
+				echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = '$isadmin'\n";
+				return false;
+			}
 		}
 	}
 }
@@ -328,10 +330,12 @@ function isUserIgnored($nick) {
 	$sqlstmt->bind_result($isignored);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isignored == "1") {
-			return true;
-		} else {
-			return false;
+		while($sqlstmt->fetch()) {
+			if($isignored == "1") {
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 }
