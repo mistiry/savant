@@ -84,12 +84,11 @@ while(1) {
 		if($ircdata['command'] == "PING") {
 			echo "[$timestamp]  PONG ".$ircdata['messagetype']."";
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
+			fputs($socket,"JOIN ".$setting['o']."\n"); //bandaid as it keeps complaining when joining opchannel cuz of +r
 		}
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
-			//some reason if opchannel is +r it wont join it so this is a band aid
-			fputs($socket,"JOIN ".$setting['o']."\n");
 			$voicedusers = createVoicedUsersArray();
 			if($ircdata['location'] == $setting['c']) {
 				createAllUsersList();
