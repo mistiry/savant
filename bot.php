@@ -135,8 +135,12 @@ while(1) {
 			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); 
 		}
 		
+		//
+		
 		//Accept PMs from admins, otherwise ignore; then continue processing messages to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
+			$messagearray = $ircdata['messagearray'];
+			$firstword = trim($messagearray[1]);
 			if(isUserAdmin($ircdata['usernickname']) == true) {
 				switch($firstword) {
 					case "!nsregister":
