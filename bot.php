@@ -192,11 +192,12 @@ while(1) {
 			//Regular channel commands
 			} else {
 				switch ($firstword) {
-					case ".seen":
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
 						break;
-					case ".nominate":
+					case "!help":
+						sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
+						break;
 					case "!nominate":
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
