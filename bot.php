@@ -188,7 +188,7 @@ while(1) {
 			if($firstword[0] == "!") {
 				echo "[$timestamp]  Seen command $firstword in channel ".$ircdata['location']."\n";
 			}
-			if(isUserIgnored($ircdata['usernickname'] == false)) {
+			if(isUserIgnored($ircdata['usernickname']) == false) {
 				switch($firstword) {
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
