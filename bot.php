@@ -98,6 +98,11 @@ while(1) {
 			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
 			$shouldhavevoice = createShouldBeVoicedArray();
 			
+			//check all the voiced users in case their granted time has expired
+			foreach($voicedusers as $usertocheck) {
+				checkUserVoiceExpired($usertocheck);
+			}
+			
 			//check all users with voice, remove those that dont have it, grant if they should but dont
 			echo "[$timestamp]  Checking that all voices set properly.\n";
 			foreach($voicedusers as $usertocheck) {
@@ -111,13 +116,10 @@ while(1) {
 					true;
 				}
 			}
-			
-			//Next, we check all the voiced users in case their granted time has expired
-			foreach($voicedusers as $usertocheck) {
-				checkUserVoiceExpired($usertocheck);
-			}
-			
+
 			//Now check all users and if they're supposed to be voiced, voice them
+			$usertocheck = "";
+			$shouldhavevoice = createShouldBeVoicedArray();
 			foreach($alluserslist as $usertocheck) {
 				if(shouldBeVoiced($usertocheck) == true) {
 					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
@@ -226,15 +228,17 @@ function createAllUsersList() {
 	global $timestamp;
 	global $setting;
 	global $ircdata;
+	global $alluserslist;
 	
-	$alluserslist = array();
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
 	foreach($pieces as $names) {
 		$name = substr($names,1);
 		array_push($alluserslist,$name);
+		$arraycount = count($alluserslist);
+		echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 	}
-	return $alluserslist;
+	return true;
 }
 function createShouldBeVoicedArray() {
 	global $timestamp;
