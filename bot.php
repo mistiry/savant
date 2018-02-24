@@ -186,7 +186,7 @@ while(1) {
 			$messagearray = $ircdata['messagearray'];
 			$firstword = trim($messagearray[1]);
 			if($firstword[0] == "!") {
-				echo "[$timestamp]  Seen command $firstword in channel $ircdata['location']\n";
+				echo "[$timestamp]  Seen command $firstword in channel ".$ircdata['location']."\n";
 			}
 			if(isUserIgnored($ircdata['usernickname'] == false)) {
 				switch($firstword) {
