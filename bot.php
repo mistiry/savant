@@ -186,10 +186,10 @@ while(1) {
 				}						
 			}
 		} else {
-				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
+			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		}	
 			// * COMMAND PROCESSING * \\
-			if(isUserIgnored($ircdata['usernickname'] == false) {
+			if(isUserIgnored($ircdata['usernickname'] == false)) {
 				switch($firstword) {
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
@@ -213,8 +213,8 @@ while(1) {
 						break;
 				  }
 			}
-		}
 			// * END COMMAND PROCESSING * \\
+		}
 		}
     }
 }
