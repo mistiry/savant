@@ -182,12 +182,12 @@ while(1) {
 						print_r($voicedusers);
 						echo "allusers\n";
 						print_r($alluserslist);
-						break;					
-				}
-			} else {
-				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
+						break;
+				}						
 			}
-		} else {	
+		} else {
+				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
+		}	
 			// * COMMAND PROCESSING * \\
 			if(isUserIgnored($ircdata['usernickname'] == false) {
 				switch($firstword) {
