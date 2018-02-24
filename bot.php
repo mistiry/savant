@@ -322,6 +322,7 @@ function isUserAdmin($nick) {
 function isUserIgnored($nick) {
 	global $mysqlconn;
 	global $ircdata;
+	galobal $timestamp;
 	
 	$sqlstmt = $mysqlconn->prepare('SELECT isignored FROM usertable WHERE nick=?');
 	$sqlstmt->bind_param('s', $nick);
@@ -332,10 +333,10 @@ function isUserIgnored($nick) {
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
 			if($isignored == "1") {
-				echo "[$timestamp]  User '".$ircdata['location']."' ignored, database value isignored = '$isignored'\n";
+				//echo "[$timestamp]  User '".$ircdata['location']."' ignored, database value isignored = '$isignored'\n";
 				return true;
 			} else {
-				echo "[$timestamp]  User '".$ircdata['location']."' command allowed, database value isignored = '$isignored'\n";
+				//echo "[$timestamp]  User '".$ircdata['location']."' command allowed, database value isignored = '$isignored'\n";
 				return false;
 			}
 		}
