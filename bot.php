@@ -324,7 +324,11 @@ function isUserIgnored($nick) {
 	$sqlstmt->bind_result($isignored);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		($isignored == true) ? return true : return false ;
+		if($isignored == true) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	return;
 }
