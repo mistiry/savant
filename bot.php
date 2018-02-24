@@ -438,7 +438,7 @@ function checkUserVoiceExpired($nick) {
 function getNominations() {
 	global $timestamp;
 	global $mysqlconn;
-	global $setting;
+	global $ircdata;
 
 	
 	$sqlstmt = $mysqlconn->prepare('SELECT id,nominator,nominee,nominationtime,nominationreason FROM nominations WHERE status = "new"');
@@ -448,10 +448,10 @@ function getNominations() {
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
-			sendPRIVMSG($setting['c'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
+			sendPRIVMSG($ircdata['usernickname'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
 		}
 	} else {
-		sendPRIVMSG($setting['c'], "There are no new nominations.");
+		sendPRIVMSG($ircdata['usernickname'], "There are no new nominations.");
 	}
 	return;
 }
