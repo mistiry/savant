@@ -241,7 +241,7 @@ function createShouldBeVoicedArray() {
 	} else {
 		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
 	}
-	($debugmode == true) ? print_r($shouldhavevoice);
+	($debugmode == true) ? print_r($shouldhavevoice) : true ;
 	return $shouldhavevoice;
 }
 function isUserVoiced($nick) {
