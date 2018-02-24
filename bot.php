@@ -56,6 +56,7 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
 
+sleep(3);
 fputs($socket,"JOIN ".$setting['c']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
@@ -67,11 +68,10 @@ $epoch = time();
 $nextnamescheck = $epoch + 1;
 $voicedusers = array();
 $alluserslist = array();
-//$shouldhavevoice = createShouldBeVoicedArray();
+$shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
-		sleep(1);
 		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
@@ -129,7 +129,7 @@ while(1) {
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			$nextnamescheck = $nowepoch + 300;
+			$nextnamescheck = $nowepoch + 60;
 		}
 
 		//For each message, log it to the database for seen stats only for the regular channel
@@ -188,33 +188,32 @@ while(1) {
 		} else {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 		}	
-		
-		// * COMMAND PROCESSING * \\
-		if(isUserIgnored($ircdata['usernickname'] == false)) {
-			switch($firstword) {
-				case "!seen":
-					sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
-					break;
-				case "!help":
-					sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
-					break;
-				case "!nominate":
-					$nomineepieces = explode(" ",$ircdata['commandargs']);
-					$nominee = $nomineepieces[0];
-					if(!in_array($nominee,$alluserslist)) {
-						sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
-					} else {
-						$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
-						if($nominee == $ircdata['usernickname']) { 
-							sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+			// * COMMAND PROCESSING * \\
+			if(isUserIgnored($ircdata['usernickname'] == false)) {
+				switch($firstword) {
+					case "!seen":
+						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
+						break;
+					case "!help":
+						sendPRIVMSG($ircdata['location'], "https://gist.github.com/mistiry/e660e2ac2ee434dac830bfbeedd5ddbd");
+						break;
+					case "!nominate":
+						$nomineepieces = explode(" ",$ircdata['commandargs']);
+						$nominee = $nomineepieces[0];
+						if(!in_array($nominee,$alluserslist)) {
+							sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
 						} else {
-							sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
+							if($nominee == $ircdata['usernickname']) { 
+								sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+							} else {
+								sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							}
 						}
-					}
-					break;
-			  }
-		}
-		// * END COMMAND PROCESSING * \\
+						break;
+				  }
+			}
+			// * END COMMAND PROCESSING * \\
 	}
 }
 function createVoicedUsersArray() {
@@ -307,7 +306,7 @@ function isUserAdmin($nick) {
 	$sqlstmt->bind_result($isadmin);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isadmin == 1) {
+		if($isadmin == true) {
 			return true;
 		} else {
 			return false;
@@ -325,7 +324,7 @@ function isUserIgnored($nick) {
 	$sqlstmt->bind_result($isignored);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isignored == 1) {
+		if($isignored == true) {
 			return true;
 		} else {
 			return false;
@@ -382,7 +381,7 @@ function voiceAction($type,$id) {
 		$sqlstmt->bind_param('s',$id);
 		$sqlstmt->execute();
 		if($mysqlconn->affected_rows > 0) {
-			sendPRIVMSG($setting['c'], "Revoked voice from user $id after time expired.");
+			sendPRIVMSG($setting['o'], "Revoked voice from user $id after time expired.");
 			minusV($id);
 		} else {
 			true;
