@@ -64,7 +64,7 @@ fputs($socket,"JOIN ".$setting['o']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
 $ignore = array('001','002','003','004','005','250','251','252','253',
-                '254','255','265','266','372','375','376','366',
+                '254','255','265','266','353','372','375','376','366',
 );
 
 $epoch = time();
@@ -88,9 +88,10 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
+			//some reason if opchannel is +r it wont join it so this is a band aid
+			fputs($socket,"JOIN ".$setting['o']."\n");
 			$voicedusers = createVoicedUsersArray();
 			if($ircdata['location'] == $setting['c']) {
-				$alluserslist = array();
 				createAllUsersList();
 				$arraycount = count($alluserslist);
 				echo "[$timestamp]  Built alluserslist with $arraycount names\n";
