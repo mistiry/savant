@@ -12,7 +12,6 @@ echo "Starting bot...\n";
 $settings = "s:";	//server to connect to
 $settings.= "p:";	//port to use
 $settings.= "c:";	//channel to manage
-$settings.= "o:";	//operations channel
 $settings.= "n:";	//nickname
 $settings.= "i:";	//nickserv password
 $settings.= "e:";	//email, should only be used if you need to register with NickServ
@@ -27,7 +26,6 @@ $errmsg = "";
 empty($setting['s']) ? $errmsg.= "No server provided!\n" : true ;
 empty($setting['p']) ? $errmsg.= "No port provided!\n" : true ;
 empty($setting['c']) ? $errmsg.= "No channel provided!\n" : true ;
-empty($setting['o']) ? $errmsg.= "No opchannel provided!\n" : true ;
 empty($setting['n']) ? $errmsg.= "No nickname provided!\n" : true ;
 empty($setting['m']) ? $errmsg.= "No MySQL host provided!\n" : true ;
 empty($setting['u']) ? $errmsg.= "No MySQL user provided!\n" : true ;
@@ -60,11 +58,10 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 
 sleep(3);
 fputs($socket,"JOIN ".$setting['c']."\n");
-fputs($socket,"JOIN ".$setting['o']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
 $ignore = array('001','002','003','004','005','250','251','252','253',
-                '254','255','265','266','353','372','375','376','366',
+                '254','255','265','266','372','375','376','366',
 );
 
 $epoch = time();
@@ -84,18 +81,15 @@ while(1) {
 		if($ircdata['command'] == "PING") {
 			echo "[$timestamp]  PONG ".$ircdata['messagetype']."";
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
-			//fputs($socket,"JOIN ".$setting['o']."\n"); //bandaid as it keeps complaining when joining opchannel cuz of +r
 		}
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
-			if($ircdata['location'] == $setting['c']) {
-				$voicedusers = createVoicedUsersArray();
-				$alluserslist = array();
-				createAllUsersList();
-				$arraycount = count($alluserslist);
-				echo "[$timestamp]  Built alluserslist with $arraycount names\n";
-			}
+			$voicedusers = createVoicedUsersArray();
+			$alluserslist = array();
+			createAllUsersList();
+			$arraycount = count($alluserslist);
+			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -138,19 +132,17 @@ while(1) {
 			$nextnamescheck = $nowepoch + 60;
 		}
 
-		//Ignore PMs, otherwise process each message to determine if we have an action
+		//For each message, log it to the database for seen stats only for the regular channel
+		if($ircdata['location'] == $setting['c']) {	
+			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); 
+		}
+		
+		$messagearray = $ircdata['messagearray'];
+		$firstword = trim($messagearray[1]);			
+		
+		//Accept PMs from admins, otherwise ignore; then continue processing messages to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
-			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
-		} else {
-			//For each message, log it to the database for seen stats only for the regular channel
-			if($ircdata['location'] == $setting['c']) {	logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); }
-							
-			// * COMMAND PROCESSING * \\
-			$messagearray = $ircdata['messagearray'];
-			$firstword = trim($messagearray[1]);
-			
-			//OpChannel Commands
-			if($ircdata['location'] == $setting['o']) {
+			if(isUserAdmin($ircdata['usernickname']) == true) {
 				switch($firstword) {
 					case "!nsregister":
 						if(isset($setting['i']) && isset($setting['e'])) {
@@ -190,12 +182,15 @@ while(1) {
 						print_r($voicedusers);
 						echo "allusers\n";
 						print_r($alluserslist);
-						break;
+						break;					
 				}
-		
-			//Regular channel commands
 			} else {
-				switch ($firstword) {
+				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
+			}
+		} else {	
+			// * COMMAND PROCESSING * \\
+			if(isUserIgnored($ircdata['usernickname'] == false) {
+				switch($firstword) {
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
 						break;
@@ -218,6 +213,7 @@ while(1) {
 						break;
 				  }
 			}
+		}
 			// * END COMMAND PROCESSING * \\
 		}
     }
@@ -302,6 +298,34 @@ function shouldBeVoiced($nick) {
 		return false;
 	}
 }
+function isUserAdmin($nick) {
+	global $mysqlconn;
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT isadmin FROM usertable WHERE nick=?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($isadmin);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		($isadmin == true) ? return true : return false ;
+	}
+	return;
+}
+function isUserIgnored($nick) {
+	global $mysqlconn;
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT isignored FROM usertable WHERE nick=?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($isignored);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows > 0) {
+		($isignored == true) ? return true : return false ;
+	}
+	return;
+}
 function voiceAction($type,$id) {
 	global $timestamp;
 	global $mysqlconn;
@@ -330,18 +354,18 @@ function voiceAction($type,$id) {
 				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
-					sendPRIVMSG($setting['o'], "Granted 30-day voice to user with nomination id of $id.");
+					sendPRIVMSG($setting['c'], "Granted 30-day voice to user with nomination id of $id.");
 					$sqlstmt3 = $mysqlconn->prepare('UPDATE nominations SET status="granted" WHERE id=?');
 					$sqlstmt3->bind_param('i',$id);
 					$sqlstmt3->execute();
 					if($mysqlconn->affected_rows > 0) {
-						sendPRIVMSG($setting['o'], "Successfully marked nomination as granted.");
+						//sendPRIVMSG($setting['o'], "Successfully marked nomination as granted.");
 						plusV($nick);
 					} else {
-						sendPRIVMSG($setting['o'], "Something Happened - unable to mark the nomination as granted.");
+						sendPRIVMSG($setting['c'], "Something Happened - unable to mark the nomination as granted.");
 					}
 				} else {
-					sendPRIVMSG($setting['o'], "Something Happened - unable to grant voice.");
+					sendPRIVMSG($setting['c'], "Something Happened - unable to grant voice.");
 				}
 			}
 		}
@@ -354,7 +378,8 @@ function voiceAction($type,$id) {
 			sendPRIVMSG($setting['o'], "Revoked voice from user $id after time expired.");
 			minusV($id);
 		} else {
-			sendPRIVMSG($setting['o'], "Something Happened - unable to revoke voice for user $id.");
+			true;
+			//sendPRIVMSG($setting['o'], "Something Happened - unable to revoke voice for user $id.");
 		}
 	}
 	fputs($socket, "NAMES ".$setting['c']."\n");
@@ -410,10 +435,10 @@ function getNominations() {
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
 		while($sqlstmt->fetch()) {
-			sendPRIVMSG($setting['o'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
+			sendPRIVMSG($setting['c'], "$id - $nominator nominates $nominee for voice, reason: $nominationreason ($nominationtime)");
 		}
 	} else {
-		sendPRIVMSG($setting['o'], "There are no new nominations.");
+		sendPRIVMSG($setting['c'], "There are no new nominations.");
 	}
 	return;
 }
@@ -450,7 +475,7 @@ function nominateUser($nominee,$nominator,$nominationreason) {
 		if($mysqlconn->affected_rows > 0) {
 			if($debugmode == true) { echo "[$timestamp]  Added nomination for user $nomineefull by $nominator, reason $nominationreason\n"; }
 			$return = "Thank you for your nomination! It has been added to the queue.";
-			sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
+			//sendPRIVMSG($setting['o'], "A new nomination has been queued - '$nominator' nominates '$nomineefull' for voice, reason: ".$nominationreason."");
 		} else  {
 			if($debugmode == true) { echo "[$timestamp]  Failed to add nomination for user $nomineefull by $nominator, MySQL error ".mysqli_error($mysqlconn)."\n"; }
 			$return = "Thank you for participating. Unfortunately, something happened and I was not able to add your nomination to the queue.";
