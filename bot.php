@@ -254,7 +254,7 @@ function createAllUsersList() {
 	foreach($pieces as $names) {
 		if( ($names[0] == "+") || ($names[0] == "@") ) {
 			$name = substr($names,1);
-		else {
+		} else {
 			$name = $names;
 		}
 		if(!in_array($name,$alluserslist)) {
