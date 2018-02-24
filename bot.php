@@ -95,38 +95,28 @@ while(1) {
 			$shouldhavevoice = createShouldBeVoicedArray();
 			
 			//check all users with voice, remove those that dont have it, grant if they should but dont
+			echo "[$timestamp]  Checking that all voices set properly.\n";
 			foreach($voicedusers as $usertocheck) {
 				if(!in_array($usertocheck,$shouldhavevoice)) {
-					echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
+					echo "[$timestamp]  User ".$usertocheck." shouldn't be voiced and is, I will remove it.\n";
 					minusV($usertocheck);
-				} else {
-					echo "[$timestamp]  User ".$ircdata['usernickname']." should be voiced and isn't, I will grant it.\n";
+				} elseif($isUserVoiced($usertocheck) == false) {
+					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
 					plusV($usertocheck);
+				} else {
+					true;
 				}
+				
+				//Now, lets check if their voice has expired so it can be revoked...
+				checkUserVoiceExpired($usertocheck);
 			}
 			
+			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
 			$nextnamescheck = $nowepoch + 60;
-			
-			echo "[$timestamp]  Checking that all voices set properly.\n";
+		}
 
-		}
-		
-
-	/*	
-		if(in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == false) { 
-			plusV($ircdata['usernickname']); 
-			fputs($socket, "NAMES ".$setting['c']."\n"); 
-			echo "[$timestamp]  User ".$ircdata['usernickname']." should be voiced and isn't, I will grant it.\n";
-		}
-		if(!in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == true) { 
-			minusV($ircdata['usernickname']); 
-			fputs($socket, "NAMES ".$setting['c']."\n"); 
-			echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
-		}
-	*/	
-	
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
@@ -168,20 +158,15 @@ while(1) {
 					case "!whohasvoice":
 						print_r($voicedusers);
 						break;
-					case "!updatearray":
+					case "!updatearrays":
 						$shouldhavevoice = createShouldBeVoicedArray();
+						fputs($socket, "NAMES ".$setting['c']."\n");
 						break;
 				}
 		
 			//Regular channel commands
 			} else {
 				switch ($firstword) {
-					case ".say":
-					case "!say":
-						$asdf = "PRIVMSG  ".$ircdata['location']." :".$ircdata['commandargs']."";
-						echo "[$timestamp]  $asdf";
-						fputs($socket, "PRIVMSG ".$ircdata['location']." :".$ircdata['commandargs']."\n");
-						break;
 					case ".seen":
 					case "!seen":
 						sendPRIVMSG($ircdata['location'], getSeenData($ircdata['usernickname'],$ircdata['location'],$ircdata['commandargs']));
@@ -304,6 +289,17 @@ function voiceAction($type,$id) {
 			}
 		}
 	}
+	if($type == "revoke") {
+		$sqlstmt = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=0, voiceexpiredate=NULL WHERE nick=?');
+		$sqlstmt->bind_param('s',$id);
+		$sqlstmt->execute();
+		if($mysqlconn->affected_rows > 0) {
+			sendPRIVMSG($setting['o'], "Revoked voice from user $id after time expired.");
+			minusV($id);
+		} else {
+			sendPRIVMSG($setting['o'], "Something Happened - unable to revoke voice for user $id.");
+		}
+	}
 	fputs($socket, "NAMES ".$setting['c']."\n");
 	return;
 }
@@ -318,6 +314,31 @@ function minusV($nick) {
 	global $setting;
 	global $socket;
 	fputs($socket, "MODE ".$setting['c']." -v $nick\n");
+}
+function checkUserVoiceExpired($nick) {
+	global $timestamp;
+	global $mysqlconn;
+	global $voicedusers;
+	$time = time();
+	
+	$sqlstmt = $mysqlconn->prepare('SELECT voiceexpiredate FROM usertable WHERE nick = ?');
+	$sqlstmt->bind_param('s', $nick);
+	$sqlstmt->execute();
+	$sqlstmt->store_result();
+	$sqlstmt->bind_result($voiceexpiredate);
+	$sqlrows = $sqlstmt->num_rows;
+	if($sqlrows == 1) {
+		while($sqlstmt->fetch()) {
+			if($time > $voiceexpiredate) {
+				voiceAction("revoke",$nick);
+				echo "[$timestamp]  User $nick grant expired, revoking voice now.\n";
+			} else {
+				echo "[$timestamp]  User $nick grant not yet expired.\n";
+			}
+		}
+		return true;
+	}
+	return false;
 }
 function getNominations() {
 	global $timestamp;
