@@ -71,7 +71,6 @@ $alluserslist = array();
 
 while(1) {
     while($data = fgets($socket)) {
-		sleep(1);
 		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
