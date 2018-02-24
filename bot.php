@@ -56,7 +56,6 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
 
-sleep(3);
 fputs($socket,"JOIN ".$setting['c']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
@@ -65,13 +64,14 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 );
 
 $epoch = time();
-$nextnamescheck = $epoch + 1;
+$nextnamescheck = $epoch + 120;
 $voicedusers = array();
 $alluserslist = array();
-$shouldhavevoice = createShouldBeVoicedArray();
+//$shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
+		sleep(1);
 		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
@@ -86,7 +86,6 @@ while(1) {
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
-			$alluserslist = array();
 			createAllUsersList();
 			$arraycount = count($alluserslist);
 			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
@@ -129,7 +128,7 @@ while(1) {
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			$nextnamescheck = $nowepoch + 60;
+			$nextnamescheck = $nowepoch + 300;
 		}
 
 		//For each message, log it to the database for seen stats only for the regular channel
@@ -184,11 +183,13 @@ while(1) {
 						print_r($alluserslist);
 						break;
 				}						
+			} else {
+				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 			}
-		} else {
-			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
-		}	
-			// * COMMAND PROCESSING * \\
+		}
+		
+		// * COMMAND PROCESSING * \\
+		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['c']) {
 			if(isUserIgnored($ircdata['usernickname'] == false)) {
 				switch($firstword) {
 					case "!seen":
@@ -211,9 +212,10 @@ while(1) {
 							}
 						}
 						break;
-				  }
+				}
 			}
-			// * END COMMAND PROCESSING * \\
+		}
+		// * END COMMAND PROCESSING * \\
 	}
 }
 function createVoicedUsersArray() {
@@ -306,7 +308,7 @@ function isUserAdmin($nick) {
 	$sqlstmt->bind_result($isadmin);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isadmin == true) {
+		if($isadmin == 1) {
 			return true;
 		} else {
 			return false;
@@ -324,7 +326,7 @@ function isUserIgnored($nick) {
 	$sqlstmt->bind_result($isignored);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows > 0) {
-		if($isignored == true) {
+		if($isignored == 1) {
 			return true;
 		} else {
 			return false;
@@ -381,7 +383,7 @@ function voiceAction($type,$id) {
 		$sqlstmt->bind_param('s',$id);
 		$sqlstmt->execute();
 		if($mysqlconn->affected_rows > 0) {
-			sendPRIVMSG($setting['o'], "Revoked voice from user $id after time expired.");
+			sendPRIVMSG($setting['c'], "Revoked voice from user $id after time expired.");
 			minusV($id);
 		} else {
 			true;
