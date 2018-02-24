@@ -109,7 +109,7 @@ while(1) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
 			$nextnamescheck = $nowepoch + 60;
 			
-			echo ["$timestamp]  Checking that all voices set properly.\n";
+			echo "[$timestamp]  Checking that all voices set properly.\n";
 
 		}
 		
