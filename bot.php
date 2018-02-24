@@ -56,7 +56,6 @@ if(isset($setting['i']) && !isset($setting['e'])) {
 	sendPRIVMSG("NickServ", "identify ".$setting['i']."");
 }
 
-sleep(3);
 fputs($socket,"JOIN ".$setting['c']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
