@@ -135,9 +135,6 @@ while(1) {
 			logSeenData($ircdata['usernickname'],$ircdata['userhostname'],$ircdata['fullmessage'],$ircdata['location']); 
 		}
 		
-		$messagearray = $ircdata['messagearray'];
-		$firstword = trim($messagearray[1]);			
-		
 		//Accept PMs from admins, otherwise ignore; then continue processing messages to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			if(isUserAdmin($ircdata['usernickname']) == true) {
@@ -185,10 +182,12 @@ while(1) {
 			} else {
 				sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
 			}
-		}
-		
-		// * COMMAND PROCESSING * \\
-		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['c']) {
+		} elseif($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['c']) {
+			$messagearray = $ircdata['messagearray'];
+			$firstword = trim($messagearray[1]);
+			if($firstword[0] == "!") {
+				echo "[$timestamp]  Seen command $firstword in channel $ircdata['location']\n";
+			}
 			if(isUserIgnored($ircdata['usernickname'] == false)) {
 				switch($firstword) {
 					case "!seen":
