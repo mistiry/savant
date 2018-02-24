@@ -120,9 +120,6 @@ while(1) {
 			fputs($socket, "NAMES ".$setting['c']."\n");
 			$nextnamescheck = $nowepoch + 60;
 		}
-		
-		
-
 
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
@@ -297,7 +294,7 @@ function voiceAction($type,$id) {
 		}
 	}
 	if($type == "revoke") {
-		$sqlstmt = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=0, voiceexpiredate=NULL WHERE nick=?');
+		$sqlstmt = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=NULL, voiceexpiredate=NULL WHERE nick=?');
 		$sqlstmt->bind_param('s',$id);
 		$sqlstmt->execute();
 		if($mysqlconn->affected_rows > 0) {
@@ -328,19 +325,19 @@ function checkUserVoiceExpired($nick) {
 	global $voicedusers;
 	$time = time();
 	
-	$sqlstmt = $mysqlconn->prepare('SELECT voiceexpiredate FROM usertable WHERE nick = ?');
+	$sqlstmt = $mysqlconn->prepare('SELECT shouldhavevoice,voiceexpiredate FROM usertable WHERE nick = ?');
 	$sqlstmt->bind_param('s', $nick);
 	$sqlstmt->execute();
 	$sqlstmt->store_result();
-	$sqlstmt->bind_result($voiceexpiredate);
+	$sqlstmt->bind_result($shouldhavevoice,$voiceexpiredate);
 	$sqlrows = $sqlstmt->num_rows;
 	if($sqlrows == 1) {
 		while($sqlstmt->fetch()) {
-			if($time > $voiceexpiredate) {
+			if( ($time > $voiceexpiredate) && ($shouldhavevoice == 1) )  {
 				voiceAction("revoke",$nick);
 				echo "[$timestamp]  User $nick grant expired, revoking voice now.\n";
 			} else {
-				echo "[$timestamp]  User $nick grant not yet expired.\n";
+				echo "[$timestamp]  User $nick grant not yet expired or nonexistent.\n";
 			}
 		}
 		return true;
