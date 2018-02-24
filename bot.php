@@ -84,27 +84,37 @@ while(1) {
             fputs($socket, "PONG ".$ircdata['messagetype']."\n");
 		}
 		
+		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
+		if($ircdata['messagetype'] == "353") {
+			$voicedusers = createVoicedUsersArray();
+		}
+		
 		$nowepoch = time();
 		if($nowepoch > $nextnamescheck) {
-			fputs($socket, "NAMES ".$setting['c']."\n");
+			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating shouldbevoiced list.\n";
 			$shouldhavevoice = createShouldBeVoicedArray();
-			echo "[$timestamp]  Current epoch time $nowepoch is later than $nextnamescheck, updating voiced users list.\n";
+			
+			//check all users with voice, remove those that dont have it, grant if they should but dont
+			foreach($voiceduser as $usertocheck) {
+				if(!in_array($usertocheck,$shouldBeVoiced) {
+					echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
+					minusV($usertocheck);
+				} else {
+					echo "[$timestamp]  User ".$ircdata['usernickname']." should be voiced and isn't, I will grant it.\n";
+					plusV($usertocheck);
+				}
+			}
+			
+			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
+			fputs($socket, "NAMES ".$setting['c']."\n");
 			$nextnamescheck = $nowepoch + 60;
+			
+			echo ["$timestamp]  Checking that all voices set properly.\n";
 
 		}
 		
-		if($ircdata['messagetype'] == "353") {
-			$voicedusers = array();
-			$pieces = explode(" ", $ircdata['fullmessage']);
-			foreach($pieces as $names) {
-				if($names[0] == "+") {
-					$namenoflags = substr($names,1);
-					array_push($voicedusers,$namenoflags);
-				}
-			}
-			$shouldhavevoice = createShouldBeVoicedArray();
-		}
-		
+
+	/*	
 		if(in_array($ircdata['usernickname'],$shouldhavevoice) && isUserVoiced($ircdata['usernickname']) == false) { 
 			plusV($ircdata['usernickname']); 
 			fputs($socket, "NAMES ".$setting['c']."\n"); 
@@ -115,7 +125,8 @@ while(1) {
 			fputs($socket, "NAMES ".$setting['c']."\n"); 
 			echo "[$timestamp]  User ".$ircdata['usernickname']." shouldn't be voiced and is, I will remove it.\n";
 		}
-		
+	*/	
+	
 		//Ignore PMs, otherwise process each message to determine if we have an action
 		if($ircdata['messagetype'] == "PRIVMSG" && $ircdata['location'] == $setting['n']) {
 			sendPRIVMSG($ircdata['usernickname'], "Sorry, I do not accept private messages.");
@@ -157,9 +168,8 @@ while(1) {
 					case "!whohasvoice":
 						print_r($voicedusers);
 						break;
-					case "!whoshould":
-						$whoshould = createShouldBeVoicedArray();
-						print_r($whoshould);
+					case "!updatearray":
+						$shouldhavevoice = createShouldBeVoicedArray();
 						break;
 				}
 		
@@ -193,6 +203,22 @@ while(1) {
 		}
     }
 }
+function createVoicedUsersArray() {
+	global $timestamp;
+	global $setting;
+	global $ircdata;
+	
+	$voicedusers = array();
+	$pieces = explode(" ", $ircdata['fullmessage']);
+	
+	foreach($pieces as $names) {
+		if($names[0] == "+") {
+			$namenoflags = substr($names,1);
+			array_push($voicedusers,$namenoflags);
+		}
+	}
+	return $voicedusers;
+}
 function createShouldBeVoicedArray() {
 	global $timestamp;
 	global $mysqlconn;
@@ -215,7 +241,7 @@ function createShouldBeVoicedArray() {
 	} else {
 		echo "[$timestamp]  No rows returned during check for who should have voice.\n";
 	}
-	print_r($shouldhavevoice);
+	($debugmode == true) ? print_r($shouldhavevoice);
 	return $shouldhavevoice;
 }
 function isUserVoiced($nick) {
