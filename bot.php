@@ -69,6 +69,7 @@ $ignore = array('001','002','003','004','005','250','251','252','253',
 $epoch = time();
 $nextnamescheck = $epoch + 1;
 $voicedusers = array();
+$alluserslist = array();
 $shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
@@ -87,6 +88,7 @@ while(1) {
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
 			$voicedusers = createVoicedUsersArray();
+			$alluserslist = createAllUsersList();
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -113,6 +115,14 @@ while(1) {
 			//Next, we check all the voiced users in case their granted time has expired
 			foreach($voicedusers as $usertocheck) {
 				checkUserVoiceExpired($usertocheck);
+			}
+			
+			//Now check all users and if they're supposed to be voiced, voice them
+			foreach($alluserslist as $usertocheck) {
+				if(shouldBeVoiced($usertocheck) == true) {
+					echo "[$timestamp]  User ".$usertocheck." should be voiced and isn't, I will grant it.\n";
+					plusV($usertocheck);
+				}
 			}
 			
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
@@ -179,11 +189,15 @@ while(1) {
 					case "!nominate":
 						$nomineepieces = explode(" ",$ircdata['commandargs']);
 						$nominee = $nomineepieces[0];
-						$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
-						if($nominee == $ircdata['usernickname']) { 
-							sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+						if(!in_array($nominee,$alluserslist)) {
+							sendPRIVMSG($ircdata['location'], "I don't see that user in the channel. Please try again when the user is present.");
 						} else {
-							sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							$nominationreason = NULL; for ($i = 1; $i < count($nomineepieces); $i++) { $nominationreason .= $nomineepieces[$i] . ' '; }
+							if($nominee == $ircdata['usernickname']) { 
+								sendPRIVMSG($ircdata['location'], "You cannot nominate yourself!"); 
+							} else {
+								sendPRIVMSG($ircdata['usernickname'], nominateUser($nominee,$ircdata['usernickname'],$nominationreason));
+							}
 						}
 						break;
 				  }
@@ -207,6 +221,20 @@ function createVoicedUsersArray() {
 		}
 	}
 	return $voicedusers;
+}
+function createAllUsersList() {
+	global $timestamp;
+	global $setting;
+	global $ircdata;
+	
+	$alluserslist = array();
+	$pieces = explode(" ", $ircdata['fullmessage']);
+	
+	foreach($pieces as $names) {
+		$name = substr($names,1);
+		array_push($alluserslist,$name);
+	}
+	return $alluserslist;
 }
 function createShouldBeVoicedArray() {
 	global $timestamp;
