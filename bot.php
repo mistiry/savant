@@ -168,6 +168,9 @@ while(1) {
 					case "!grant":
 						voiceAction("grant",$ircdata['commandargs']);
 						break;
+					case "!deny":
+						voiceAction("deny",$ircdata['commandargs']);
+						break;
 					case "!whohasvoice":
 						print_r($voicedusers);
 						break;
@@ -355,6 +358,7 @@ function voiceAction($type,$id) {
 	global $mysqlconn;
 	global $setting;
 	global $debugmode;
+	global $ircdata;
 	global $socket;
 	
 	if($debugmode == true) { echo "[$timestamp]  Received a request to perform voice action $type for id $id\n"; }
@@ -363,7 +367,7 @@ function voiceAction($type,$id) {
 		$now = time();
 		$newexpiredate = $now + 2592000; //Add 30 days in seconds to current epoch time
 		
-		$sqlstmt = $mysqlconn->prepare('SELECT nominee FROM nominations WHERE id=?');
+		$sqlstmt = $mysqlconn->prepare("SELECT nominee FROM nominations WHERE status='new' AND id=?");
 		$sqlstmt->bind_param('i',$id);
 		$sqlstmt->execute();
 		$sqlstmt->store_result();
@@ -374,12 +378,12 @@ function voiceAction($type,$id) {
 				$pieces = explode("@",$nominee);
 				$nick = $pieces[0];
 				$hostmask = $pieces[1];				
-				$sqlstmt2 = $mysqlconn->prepare('UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE nick=? AND hostmask=?');
+				$sqlstmt2 = $mysqlconn->prepare("UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE status='new' AND nick=? AND hostmask=?");
 				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
-					sendPRIVMSG($setting['c'], "Granted 30-day voice to user with nomination id of $id.");
-					$sqlstmt3 = $mysqlconn->prepare('UPDATE nominations SET status="granted" WHERE id=?');
+					sendPRIVMSG($setting['c'], "Granted 30-day voice to '$nominee' with nomination id of $id.");
+					$sqlstmt3 = $mysqlconn->prepare("UPDATE nominations SET status="granted" WHERE status='new' AND id=?");
 					$sqlstmt3->bind_param('i',$id);
 					$sqlstmt3->execute();
 					if($mysqlconn->affected_rows > 0) {
@@ -392,6 +396,18 @@ function voiceAction($type,$id) {
 					sendPRIVMSG($setting['c'], "Something Happened - unable to grant voice.");
 				}
 			}
+		}
+	}
+	if($type == "deny") {
+		$sqlstmt = $mysqlconn->prepare("UPDATE nominations SET status='denied' WHERE status='new' AND id=?");
+		$sqlstmt->bind_param('s',$id);
+		$sqlstmt->execute();
+		if($mysqlconn->affected_rows > 0) {
+			sendPRIVMSG($ircdata['usernickname'], "Denied voice for '$nominee' after time expired.");
+			minusV($id);
+		} else {
+			true;
+			sendPRIVMSG($ircdata['usernickname'], "Something Happened - unable to revoke voice for $nominee.");
 		}
 	}
 	if($type == "revoke") {
