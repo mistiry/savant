@@ -322,7 +322,7 @@ function isUserAdmin($nick) {
 function isUserIgnored($nick) {
 	global $mysqlconn;
 	global $ircdata;
-	galobal $timestamp;
+	global $timestamp;
 	
 	$sqlstmt = $mysqlconn->prepare('SELECT isignored FROM usertable WHERE nick=?');
 	$sqlstmt->bind_param('s', $nick);
