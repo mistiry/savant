@@ -313,7 +313,7 @@ function isUserAdmin($nick) {
 			return true;
 			
 		} else {
-			echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = NULL\n";
+			echo "[$timestamp]  Denied user $nick admin rights as database flag isadmin = '$isadmin'\n";
 			return false;
 		}
 	}
