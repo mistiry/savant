@@ -87,7 +87,7 @@ while(1) {
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
 			$arraycount = count($alluserslist);
-			echo "[$timestamp]  Built alluserslist with $arraycount names\n";
+			//echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
