@@ -71,7 +71,7 @@ $shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
-		sleep(2);
+		usleep(50000);
 		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
@@ -129,7 +129,7 @@ while(1) {
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
-			$nextnamescheck = $nowepoch + 60;
+			$nextnamescheck = $nowepoch + 300;
 		}
 
 		//For each message, log it to the database for seen stats only for the regular channel
