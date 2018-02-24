@@ -60,7 +60,7 @@ fputs($socket,"JOIN ".$setting['c']."\n");
 
 //Ignore Message Type, makes for cleaner console output, tuned for Freenode
 $ignore = array('001','002','003','004','005','250','251','252','253',
-                '254','255','265','266','372','375','376','366',
+                '254','255','265','266','353','372','375','376','366',
 );
 
 $epoch = time();
