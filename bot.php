@@ -71,6 +71,7 @@ $shouldhavevoice = createShouldBeVoicedArray();
 
 while(1) {
     while($data = fgets($socket)) {
+		sleep(2);
 		$timestamp = date("Y-m-d H:i:s T");
 		$ircdata = processIRCdata($data);
 		if(!in_array($ircdata['messagetype'], $ignore)) {
@@ -381,7 +382,7 @@ function voiceAction($type,$id) {
 		$sqlstmt->bind_param('s',$id);
 		$sqlstmt->execute();
 		if($mysqlconn->affected_rows > 0) {
-			sendPRIVMSG($setting['o'], "Revoked voice from user $id after time expired.");
+			sendPRIVMSG($setting['c'], "Revoked voice from user $id after time expired.");
 			minusV($id);
 		} else {
 			true;
