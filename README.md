@@ -28,21 +28,21 @@ a couple of times with different parameters.
 
 ```
 -s [irc.server.name]		The IRC server to connect to
--p [port]					The port number to use for the IRC connection
--c [#channel]				The Channel to connect to
--n [nickname]				The Bot's Nickname
--m [127.0.0.1]				The MySQL server to use
--u [mysql user]				The MySQL user to connect as
--q [mysql password]			The MySQL password
--b [database]				The MySQL database to use
+-p [port]			The port number to use for the IRC connection
+-c [#channel]			The Channel to connect to
+-n [nickname]			The Bot's Nickname
+-m [127.0.0.1]			The MySQL server to use
+-u [mysql user]			The MySQL user to connect as
+-q [mysql password]		The MySQL password
+-b [database]			The MySQL database to use
 ```
 
 #### Optional Parameters
 These are option parameters, use them if you need them.
 
 ```
--d true						Turn on debug mode, vastly increasing the verbosity of console output
--i [nickserv pass]			The bot's NickServ password, use if you want it to identify with NickServ
+-d true				Turn on debug mode, vastly increasing the verbosity of console output
+-i [nickserv pass]		The bot's NickServ password, use if you want it to identify with NickServ
 ```
 
 #### First Run, Register with NickServ
@@ -80,11 +80,11 @@ Now, once done, you can restart the bot a final time, with the normal parameters
 Currently, these are commands you would PM to the bot, if you are a bot admin.
 
 ```
-!nsregister			See above
-!nsverify			See above
-!noms				Get a list of unhandled nominations
-!grant [id]			Grant voice to the nominated user, based on [id] which is shown in the !noms command
-!deny [id]			Deny voice to the nominated user, based on [id] which is shown in the !noms command
+!nsregister		See above
+!nsverify		See above
+!noms			Get a list of unhandled nominations
+!grant [id]		Grant voice to the nominated user, based on [id] which is shown in the !noms command
+!deny [id]		Deny voice to the nominated user, based on [id] which is shown in the !noms command
 !whohasvoice		Does a print_r on the $voicedusers array to STDOUT on the console
 !updatearrays		Updates the $shouldbevoiced, $voicedusers, and $alluserslist ararys
 !printarrays		Does a print_r of both the $shouldbevoiced and $voicedusers arrays
@@ -95,7 +95,7 @@ Currently, these are commands you would PM to the bot, if you are a bot admin.
 These are the commands that users can run.
 
 ```
-!seen [user]				Gives the last seen information for the [user] requested
-!help 						Prints a URL to a gist page, you may want to change this
+!seen [user]			Gives the last seen information for the [user] requested
+!help 				Prints a URL to a gist page, you may want to change this
 !nominate [user] [reason]	Adds a nomination for [user] with [reason] as long as [user] isn't themselves or already nominated
 ```
