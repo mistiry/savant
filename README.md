@@ -54,6 +54,7 @@ everyone in the channel to see). To do this, you need to start the bot using thi
 ```
 
 Once connected, you can run this command to have the bot register with NickServ.
+
 ***Note: You probably want to watch the console output for this part***
 
 ```
