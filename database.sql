@@ -30,7 +30,7 @@ CREATE TABLE `nominations` (
   `nominationreason` text,
   `status` text,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -62,6 +62,8 @@ CREATE TABLE `usertable` (
   `id` int(6) NOT NULL AUTO_INCREMENT,
   `nick` varchar(32) DEFAULT NULL,
   `hostmask` varchar(255) DEFAULT NULL,
+  `isadmin` int(11) DEFAULT NULL,
+  `isignored` int(11) DEFAULT NULL,
   `lastseen` text,
   `lastseenchannel` varchar(32) DEFAULT NULL,
   `shouldhavevoice` int(1) DEFAULT NULL,
@@ -70,7 +72,7 @@ CREATE TABLE `usertable` (
   `lastmessage` text,
   PRIMARY KEY (`id`),
   UNIQUE KEY `nickhost` (`nick`,`hostmask`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=43 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -82,4 +84,4 @@ CREATE TABLE `usertable` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-02-11 23:55:31
+-- Dump completed on 2018-02-25  1:24:44

@@ -67,7 +67,8 @@ $epoch = time();
 $nextnamescheck = $epoch + 10;
 $voicedusers = array();
 $alluserslist = array();
-//$shouldhavevoice = createShouldBeVoicedArray();
+$shouldhavevoice = createShouldBeVoicedArray();
+$firstnamesrun = true;
 
 while(1) {
     while($data = fgets($socket)) {
@@ -84,10 +85,13 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
+			if($firstnamesrun == true) {
+				echo "[$timestamp]  Seen the first 353 message, resetting voicedusers array.\n";
+				$voicedusers = array();
+				$firstnamesrun = false;
+			}
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
-			$arraycount = count($alluserslist);
-			//echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -124,7 +128,9 @@ while(1) {
 					true;
 				}
 			}
-			$voicedusers = array();
+			
+			//Reset this variable so that the voicedusers array gets cleared
+			$firstnamesrun = true;
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
@@ -378,7 +384,7 @@ function voiceAction($type,$id) {
 				$pieces = explode("@",$nominee);
 				$nick = $pieces[0];
 				$hostmask = $pieces[1];				
-				$sqlstmt2 = $mysqlconn->prepare("UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE status='new' AND nick=? AND hostmask=?");
+				$sqlstmt2 = $mysqlconn->prepare("UPDATE usertable SET shouldhavevoice=1, voiceexpiredate=? WHERE nick=? AND hostmask=?");
 				$sqlstmt2->bind_param('sss',$newexpiredate,$nick,$hostmask);
 				$sqlstmt2->execute();
 				if($mysqlconn->affected_rows > 0) {
