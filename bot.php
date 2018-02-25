@@ -128,7 +128,9 @@ while(1) {
 					true;
 				}
 			}
-			$voicedusers = array();
+			
+			//Reset this variable so that the voicedusers array gets cleared
+			$firstnamesrun = true;
 			//Send a NAMES so the voicedusers array gets updated after we may have just +/-v'd people
 			echo "[$timestamp]  Sending NAMES command to update voicedusers list.\n";
 			fputs($socket, "NAMES ".$setting['c']."\n");
@@ -252,10 +254,6 @@ function createAllUsersList() {
 	global $setting;
 	global $ircdata;
 	global $alluserslist;
-	
-	//Reset this variable so that the voicedusers array gets cleared
-	global $firstnamesrun;
-	$firstnamesrun = true;
 	
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
