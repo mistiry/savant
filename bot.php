@@ -67,7 +67,8 @@ $epoch = time();
 $nextnamescheck = $epoch + 10;
 $voicedusers = array();
 $alluserslist = array();
-//$shouldhavevoice = createShouldBeVoicedArray();
+$shouldhavevoice = createShouldBeVoicedArray();
+$firstnamesrun = true;
 
 while(1) {
     while($data = fgets($socket)) {
@@ -84,10 +85,13 @@ while(1) {
 		
 		//This is when we see "NAMES", so we can go ahead and update the $voicedusers list
 		if($ircdata['messagetype'] == "353") {
+			if($firstnamesrun == true) {
+				echo "[$timestamp]  Seen the first 353 message, resetting voicedusers array.\n";
+				$voicedusers = array();
+				$firstnamesrun = false;
+			}
 			$voicedusers = createVoicedUsersArray();
 			createAllUsersList();
-			$arraycount = count($alluserslist);
-			//echo "[$timestamp]  Built alluserslist with $arraycount names\n";
 		}
 		
 		//This is where we refresh the arrays with new data, check that nobody is voiced that shouldn't be,
@@ -248,6 +252,10 @@ function createAllUsersList() {
 	global $setting;
 	global $ircdata;
 	global $alluserslist;
+	
+	//Reset this variable so that the voicedusers array gets cleared
+	global $firstnamesrun;
+	$firstnamesrun = true;
 	
 	$pieces = explode(" ", $ircdata['fullmessage']);
 	
