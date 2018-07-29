@@ -27,8 +27,8 @@ These parameters are always required. This is important later, because if you wa
 a couple of times with different parameters.
 
 ```
--s [irc.server.name]		The IRC server to connect to
--p [port]			The port number to use for the IRC connection
+-s [irc.server.name]	The IRC server to connect to
+-p [port]			    The port number to use for the IRC connection
 -c [#channel]			The Channel to connect to
 -n [nickname]			The Bot's Nickname
 -m [127.0.0.1]			The MySQL server to use
